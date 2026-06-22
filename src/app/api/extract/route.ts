@@ -4,7 +4,7 @@ import mammoth from "mammoth";
 import { extraerTextoDocumento } from "@/lib/anthropic";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
+export const maxDuration = 60; // Hobby de Vercel: máximo 60s
 
 const IMG: Record<string, string> = {
   png: "image/png",

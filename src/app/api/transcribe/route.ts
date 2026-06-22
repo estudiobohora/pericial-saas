@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
+export const maxDuration = 60; // Hobby de Vercel: máximo 60s
 
 // POST /api/transcribe — recibe un MP3 y devuelve la transcripción (Whisper).
 // Requiere OPENAI_API_KEY. Whisper limita a 25 MB por archivo.
