@@ -1,26 +1,39 @@
 @import "tailwindcss";
 
+/* Tema claro fijo y sobrio para una herramienta pericial/legal. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #f8fafc; /* slate-50 */
+  --foreground: #1e293b; /* slate-800 */
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: ui-sans-serif, system-ui, Arial, Helvetica, sans-serif;
 }
+
+/* ── Vista previa del informe (markdown renderizado) ── */
+.reporte {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #1e293b;
+  line-height: 1.55;
+  font-size: 0.95rem;
+}
+.reporte h1 { font-size: 1.4rem; font-weight: 700; margin: 1.2rem 0 0.6rem; color: #0f172a; }
+.reporte h2 { font-size: 1.2rem; font-weight: 700; margin: 1.1rem 0 0.5rem; color: #0f172a; }
+.reporte h3 { font-size: 1.05rem; font-weight: 700; margin: 1rem 0 0.4rem; color: #0f172a; }
+.reporte p { margin: 0.5rem 0; }
+.reporte ul, .reporte ol { margin: 0.5rem 0 0.5rem 1.4rem; list-style: revert; }
+.reporte li { margin: 0.2rem 0; }
+.reporte strong { font-weight: 700; }
+.reporte blockquote {
+  border-left: 3px solid #94a3b8;
+  background: #f1f5f9;
+  padding: 0.5rem 0.9rem;
+  margin: 0.7rem 0;
+  color: #334155;
+}
+.reporte table { border-collapse: collapse; width: 100%; margin: 0.7rem 0; font-size: 0.9rem; }
+.reporte th, .reporte td { border: 1px solid #cbd5e1; padding: 0.4rem 0.6rem; text-align: left; vertical-align: top; }
+.reporte th { background: #e2e8f0; font-weight: 700; }
+.reporte hr { border: 0; border-top: 1px solid #cbd5e1; margin: 1.2rem 0; }
