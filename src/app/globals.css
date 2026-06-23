@@ -1,9 +1,19 @@
 @import "tailwindcss";
 
-/* Tema claro fijo y sobrio para una herramienta pericial/legal. */
+@theme {
+  --color-ink: #1b2a41;
+  --color-ink-soft: #2c3e57;
+  --color-marfil: #f7f3ec;
+  --color-laton: #b08d57;
+  --color-laton-soft: #c7a878;
+  --color-laton-dark: #8a6d3b;
+  --font-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
+}
+
+/* Tema "Bufete": tinta + marfil + latón. */
 :root {
-  --background: #f8fafc; /* slate-50 */
-  --foreground: #1e293b; /* slate-800 */
+  --background: #f7f3ec; /* marfil */
+  --foreground: #2a2a28; /* tinta cálida */
 }
 
 body {
@@ -19,9 +29,9 @@ body {
   line-height: 1.55;
   font-size: 0.95rem;
 }
-.reporte h1 { font-size: 1.4rem; font-weight: 700; margin: 1.2rem 0 0.6rem; color: #0f172a; }
-.reporte h2 { font-size: 1.2rem; font-weight: 700; margin: 1.1rem 0 0.5rem; color: #0f172a; }
-.reporte h3 { font-size: 1.05rem; font-weight: 700; margin: 1rem 0 0.4rem; color: #0f172a; }
+.reporte h1 { font-size: 1.4rem; font-weight: 700; margin: 1.2rem 0 0.6rem; color: #1b2a41; }
+.reporte h2 { font-size: 1.2rem; font-weight: 700; margin: 1.1rem 0 0.5rem; color: #1b2a41; }
+.reporte h3 { font-size: 1.05rem; font-weight: 700; margin: 1rem 0 0.4rem; color: #1b2a41; }
 .reporte p { margin: 0.5rem 0; }
 .reporte ul, .reporte ol { margin: 0.5rem 0 0.5rem 1.4rem; list-style: revert; }
 .reporte li { margin: 0.2rem 0; }

@@ -241,33 +241,28 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Encabezado */}
-      <header className="bg-slate-900 text-white">
-        <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between">
+      <header className="bg-ink text-marfil">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
           <div className="flex items-baseline gap-3">
-            <span className="text-lg font-semibold tracking-tight">Pericial</span>
-            <span className="text-xs text-slate-300">Borrador asistido de informes socio-económicos</span>
+            <span className="font-serif text-2xl font-semibold tracking-tight text-marfil">Pericial</span>
+            <span className="hidden font-serif text-xs tracking-[0.12em] text-laton-soft sm:inline">
+              INFORMES SOCIO-ECONÓMICOS FORENSES
+            </span>
           </div>
-          <span className="text-[10px] uppercase tracking-wider bg-slate-700 text-slate-200 px-2 py-1 rounded">
-            BETA · nombre provisional
+          <span className="rounded border border-laton/40 px-2 py-1 text-[10px] uppercase tracking-wider text-laton-soft">
+            Beta · nombre provisional
           </span>
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-8 space-y-6">
-        {/* Aviso legal */}
-        <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <strong>Borrador generado con IA para revisión profesional.</strong> La trabajadora social
-          forense revisa, adapta y firma el documento final. Toda la responsabilidad profesional y
-          legal recae en la profesional firmante.
-        </div>
-
         {/* 1. Datos del caso */}
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="rounded-lg border border-[#e7decc] bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+            <h2 className="font-serif text-lg text-ink">
               Datos del caso
             </h2>
-            <button onClick={cargarDemo} className="text-xs text-blue-800 hover:underline">
+            <button onClick={cargarDemo} className="text-xs text-laton-dark hover:underline">
               Cargar caso de prueba
             </button>
           </div>
@@ -284,7 +279,7 @@ export default function Home() {
                 type="date"
                 value={datos.fechaNacimiento || ""}
                 onChange={(e) => setCampoDatos("fechaNacimiento", e.target.value)}
-                className="rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-700"
+                className="rounded border border-slate-300 px-3 py-2 text-sm focus:border-laton focus:outline-none focus:ring-1 focus:ring-laton"
               />
             </div>
             <Campo label="Fecha de evaluación" type="date" value={datos.fechaEvaluacion || ""} onChange={(v) => setCampoDatos("fechaEvaluacion", v)} />
@@ -294,7 +289,7 @@ export default function Home() {
               <select
                 value={datos.tipoEvaluacion || ""}
                 onChange={(e) => setCampoDatos("tipoEvaluacion", e.target.value)}
-                className="rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-700"
+                className="rounded border border-slate-300 px-3 py-2 text-sm focus:border-laton focus:outline-none focus:ring-1 focus:ring-laton"
               >
                 <option value="">Seleccionar…</option>
                 <option value="incapacidad">Incapacidad</option>
@@ -306,7 +301,7 @@ export default function Home() {
               <select
                 value={datos.regionJudicial || ""}
                 onChange={(e) => setCampoDatos("regionJudicial", e.target.value)}
-                className="rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-700"
+                className="rounded border border-slate-300 px-3 py-2 text-sm focus:border-laton focus:outline-none focus:ring-1 focus:ring-laton"
               >
                 <option value="">Seleccionar…</option>
                 {REGIONES_JUDICIALES.map((o) => (
@@ -322,7 +317,7 @@ export default function Home() {
               <select
                 value={datos.relacionPeticionario || ""}
                 onChange={(e) => setCampoDatos("relacionPeticionario", e.target.value)}
-                className="rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-700"
+                className="rounded border border-slate-300 px-3 py-2 text-sm focus:border-laton focus:outline-none focus:ring-1 focus:ring-laton"
               >
                 <option value="">Seleccionar…</option>
                 {RELACIONES.map((o) => (
@@ -336,8 +331,8 @@ export default function Home() {
         </section>
 
         {/* 2. Entradas */}
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-          <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+        <section className="rounded-lg border border-[#e7decc] bg-white p-5 shadow-sm space-y-4">
+          <h2 className="font-serif text-lg text-ink">
             Entrevista y documentos
           </h2>
           <div className="space-y-2">
@@ -387,7 +382,7 @@ export default function Home() {
             <button
               onClick={generar}
               disabled={loading}
-              className="rounded bg-blue-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800 disabled:opacity-50"
+              className="rounded bg-ink px-5 py-2.5 text-sm font-medium text-marfil hover:bg-ink-soft disabled:opacity-50"
             >
               {loading ? "Generando borrador…" : "Generar borrador"}
             </button>
@@ -400,21 +395,21 @@ export default function Home() {
 
         {/* 3. Borrador editable */}
         {borrador && (
-          <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm space-y-5">
+          <section className="rounded-lg border border-[#e7decc] bg-white p-5 shadow-sm space-y-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+              <h2 className="font-serif text-lg text-ink">
                 Borrador editable
               </h2>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setVerPreview((v) => !v)}
-                  className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+                  className="rounded border border-laton/50 px-3 py-1.5 text-sm text-ink hover:bg-[#efe9dc]"
                 >
                   {verPreview ? "Editar" : "Vista previa"}
                 </button>
                 <button
                   onClick={exportarWord}
-                  className="rounded bg-emerald-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-emerald-800"
+                  className="rounded bg-laton px-4 py-1.5 text-sm font-medium text-ink hover:bg-laton-soft"
                 >
                   Exportar a Word
                 </button>
@@ -445,7 +440,7 @@ export default function Home() {
                 />
 
                 <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-slate-700">5. Análisis</h3>
+                  <h3 className="font-serif text-base text-ink">5. Análisis</h3>
                   <SeccionEdit label="5.1 Análisis Económico" value={borrador.analisis.economico} onChange={(v) => setAnalisis("economico", v)} />
                   <SeccionEdit label="5.2 Análisis de Salud" value={borrador.analisis.salud} onChange={(v) => setAnalisis("salud", v)} />
                   <SeccionEdit label="5.3 Análisis Psicosocial" value={borrador.analisis.psicosocial} onChange={(v) => setAnalisis("psicosocial", v)} />
@@ -458,8 +453,8 @@ export default function Home() {
         )}
       </main>
 
-      <footer className="mx-auto max-w-5xl px-6 py-8 text-center text-xs text-slate-400">
-        Borrador asistido por IA · Herramienta para trabajadoras sociales forenses · Puerto Rico
+      <footer className="mx-auto max-w-5xl px-6 py-8 text-center font-serif text-xs tracking-wide text-[#9c8f76]">
+        Herramienta para Profesionales en el Área Forense
       </footer>
     </div>
   );
@@ -483,7 +478,7 @@ function Campo({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-700"
+        className="rounded border border-slate-300 px-3 py-2 text-sm focus:border-laton focus:outline-none focus:ring-1 focus:ring-laton"
       />
     </div>
   );
@@ -511,7 +506,7 @@ function AreaTexto({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={rows}
-        className="resize-y rounded border border-slate-300 px-3 py-2 text-sm leading-relaxed focus:border-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-700"
+        className="resize-y rounded border border-slate-300 px-3 py-2 text-sm leading-relaxed focus:border-laton focus:outline-none focus:ring-1 focus:ring-laton"
       />
     </div>
   );
@@ -524,14 +519,14 @@ function SeccionEdit({ label, value, onChange }: { label: string; value: string;
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="min-h-[140px] resize-y rounded border border-slate-300 bg-slate-50 px-3 py-2 font-mono text-[13px] leading-relaxed text-slate-800 focus:border-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-700"
+        className="min-h-[140px] resize-y rounded border border-slate-300 bg-slate-50 px-3 py-2 font-mono text-[13px] leading-relaxed text-slate-800 focus:border-laton focus:outline-none focus:ring-1 focus:ring-laton"
       />
     </div>
   );
 }
 
 const INPUT_CLS =
-  "w-full rounded border border-slate-300 px-2 py-1.5 text-[13px] focus:border-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-700";
+  "w-full rounded border border-slate-300 px-2 py-1.5 text-[13px] focus:border-laton focus:outline-none focus:ring-1 focus:ring-laton";
 
 function MetodologiaForm({ met, onChange }: { met: Metodologia; onChange: (m: Metodologia) => void }) {
   const updTec = (i: number, campo: keyof Metodologia["tecnicas"][number], v: string) =>
@@ -550,9 +545,9 @@ function MetodologiaForm({ met, onChange }: { met: Metodologia; onChange: (m: Me
   const delEnt = (i: number) => onChange({ ...met, entrevistas: met.entrevistas.filter((_, idx) => idx !== i) });
 
   return (
-    <div className="space-y-4 rounded-md border border-slate-200 bg-slate-50/60 p-4">
+    <div className="space-y-4 rounded-md border border-slate-200 bg-[#fbf7ee] p-4">
       <div>
-        <h3 className="text-sm font-semibold text-slate-700">3. Metodología</h3>
+        <h3 className="font-serif text-base text-ink">3. Metodología</h3>
         <p className="text-xs text-slate-500">
           Esta sección la completas tú. Selecciona la técnica en la primera columna y llena el resto.
         </p>
@@ -610,7 +605,7 @@ function MetodologiaForm({ met, onChange }: { met: Metodologia; onChange: (m: Me
             </tbody>
           </table>
         </div>
-        <button onClick={addTec} className="text-xs font-medium text-blue-800 hover:underline">
+        <button onClick={addTec} className="text-xs font-medium text-laton-dark hover:underline">
           + Añadir técnica
         </button>
       </div>
@@ -665,7 +660,7 @@ function MetodologiaForm({ met, onChange }: { met: Metodologia; onChange: (m: Me
             </tbody>
           </table>
         </div>
-        <button onClick={addEnt} className="text-xs font-medium text-blue-800 hover:underline">
+        <button onClick={addEnt} className="text-xs font-medium text-laton-dark hover:underline">
           + Añadir entrevista
         </button>
       </div>
@@ -676,7 +671,7 @@ function MetodologiaForm({ met, onChange }: { met: Metodologia; onChange: (m: Me
         <textarea
           value={met.observaciones}
           onChange={(e) => onChange({ ...met, observaciones: e.target.value })}
-          className="min-h-[80px] resize-y rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-700"
+          className="min-h-[80px] resize-y rounded border border-slate-300 px-3 py-2 text-sm focus:border-laton focus:outline-none focus:ring-1 focus:ring-laton"
           placeholder="Notas u observaciones del proceso de evaluación…"
         />
       </div>
@@ -691,9 +686,9 @@ function DocumentosForm({ docs, onChange }: { docs: DocumentoRev[]; onChange: (d
   const del = (i: number) => onChange(docs.filter((_, idx) => idx !== i));
 
   return (
-    <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50/60 p-4">
+    <div className="space-y-3 rounded-md border border-slate-200 bg-[#fbf7ee] p-4">
       <div>
-        <h3 className="text-sm font-semibold text-slate-700">2. Documentos Revisados</h3>
+        <h3 className="font-serif text-base text-ink">2. Documentos Revisados</h3>
         <p className="text-xs text-slate-500">
           Se llenan solos al subir el ZIP. Ajusta el tipo y marca cuáles revisaste.
         </p>
@@ -738,7 +733,7 @@ function DocumentosForm({ docs, onChange }: { docs: DocumentoRev[]; onChange: (d
                     type="checkbox"
                     checked={d.revisado}
                     onChange={(e) => upd(i, "revisado", e.target.checked)}
-                    className="h-4 w-4 accent-blue-800"
+                    className="h-4 w-4 accent-ink"
                   />
                 </td>
                 <td className="border border-slate-200 px-1 py-1 text-center align-top">
@@ -751,7 +746,7 @@ function DocumentosForm({ docs, onChange }: { docs: DocumentoRev[]; onChange: (d
           </tbody>
         </table>
       </div>
-      <button onClick={add} className="text-xs font-medium text-blue-800 hover:underline">
+      <button onClick={add} className="text-xs font-medium text-laton-dark hover:underline">
         + Añadir documento
       </button>
     </div>
@@ -766,9 +761,9 @@ function RecomendacionesForm({ rec, onChange }: { rec: Recomendaciones; onChange
   };
 
   return (
-    <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50/60 p-4">
+    <div className="space-y-3 rounded-md border border-slate-200 bg-[#fbf7ee] p-4">
       <div>
-        <h3 className="text-sm font-semibold text-slate-700">6.2 Recomendaciones al Tribunal</h3>
+        <h3 className="font-serif text-base text-ink">6.2 Recomendaciones al Tribunal</h3>
         <p className="text-xs text-slate-500">
           Marca las recomendaciones que apliquen y añade las específicas del caso abajo.
         </p>
@@ -780,7 +775,7 @@ function RecomendacionesForm({ rec, onChange }: { rec: Recomendaciones; onChange
               type="checkbox"
               checked={rec.seleccionadas.includes(op)}
               onChange={() => toggle(op)}
-              className="mt-0.5 h-4 w-4 accent-blue-800"
+              className="mt-0.5 h-4 w-4 accent-ink"
             />
             <span>{op}</span>
           </label>
@@ -791,7 +786,7 @@ function RecomendacionesForm({ rec, onChange }: { rec: Recomendaciones; onChange
         <textarea
           value={rec.adicional}
           onChange={(e) => onChange({ ...rec, adicional: e.target.value })}
-          className="min-h-[90px] resize-y rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-700"
+          className="min-h-[90px] resize-y rounded border border-slate-300 px-3 py-2 text-sm focus:border-laton focus:outline-none focus:ring-1 focus:ring-laton"
           placeholder="Recomendaciones específicas que no estén en la lista…"
         />
       </div>

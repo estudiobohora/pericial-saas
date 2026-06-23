@@ -31,9 +31,9 @@ export default function Acceso() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
-      <form onSubmit={entrar} className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="mb-1 text-lg font-semibold tracking-tight text-slate-900">Pericial</div>
-        <p className="mb-5 text-sm text-slate-500">Acceso beta privado</p>
+      <form onSubmit={entrar} className="w-full max-w-sm rounded-lg border border-[#e7decc] bg-white p-6 shadow-sm">
+        <div className="mb-1 font-serif text-2xl font-semibold tracking-tight text-ink">Pericial</div>
+        <p className="mb-5 text-sm text-laton-dark">Acceso beta privado</p>
 
         <label className="mb-1 block text-xs font-medium text-slate-600">Contraseña</label>
         <input
@@ -41,7 +41,7 @@ export default function Acceso() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoFocus
-          className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-700"
+          className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-laton focus:outline-none focus:ring-1 focus:ring-laton"
         />
 
         {error && <p className="mt-2 text-sm text-red-700">Contraseña incorrecta.</p>}
@@ -49,7 +49,7 @@ export default function Acceso() {
         <button
           type="submit"
           disabled={loading || !password}
-          className="mt-4 w-full rounded bg-blue-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-800 disabled:opacity-50"
+          className="mt-4 w-full rounded bg-ink px-4 py-2.5 text-sm font-medium text-marfil hover:bg-ink-soft disabled:opacity-50"
         >
           {loading ? "Entrando…" : "Entrar"}
         </button>
