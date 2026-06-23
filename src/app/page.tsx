@@ -359,11 +359,11 @@ export default function Home() {
                 />
                 {subiendoAudio ? "Transcribiendo…" : "🎙️ Subir audio (MP3) de la entrevista"}
               </label>
-              <span className="text-xs text-slate-400">Whisper transcribe automáticamente (se activa al conectar OpenAI).</span>
+              <span className="text-xs text-slate-400">Whisper transcribe el audio automáticamente.</span>
             </div>
             <AreaTexto
               label="Transcripción de la entrevista"
-              hint="(Sube el audio arriba, o pégala a mano.)"
+              hint="(Se llena al subir el audio. Revísala y corrige lo necesario.)"
               value={transcripcion}
               onChange={setTranscripcion}
               rows={8}
