@@ -251,7 +251,7 @@ export default function Home() {
           <div className="flex items-baseline gap-3">
             <span className="font-serif text-2xl font-semibold tracking-tight text-marfil">Pericial</span>
             <span className="hidden font-serif text-xs tracking-[0.12em] text-laton-soft sm:inline">
-              INFORMES SOCIO-ECONÓMICOS FORENSES
+              INFORME SOCIO-ECONÓMICO FORENSE
             </span>
           </div>
           <div className="flex items-center gap-4">
@@ -504,7 +504,7 @@ export default function Home() {
 
       <footer className="mx-auto max-w-5xl px-6 py-8 text-center text-[#9c8f76]">
         <p className="font-serif text-xs tracking-wide">
-          © 2026 The Lab. Todos los derechos reservados.
+          © 2026 Angel Comas, Psicólogo I/O. Todos los derechos reservados.
         </p>
         <p className="mx-auto mt-1.5 max-w-2xl text-[11px] leading-relaxed">
           Herramienta Digital Asistida con IA para Profesionales de la Salud Mental en el Área Forense. Hecho en Puerto Rico.
