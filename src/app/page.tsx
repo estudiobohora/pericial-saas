@@ -260,7 +260,7 @@ export default function Home() {
             </span>
             <button
               onClick={salir}
-              className="text-xs text-laton-soft transition-colors hover:text-marfil"
+              className="rounded border border-laton/60 px-3 py-1 text-xs font-medium text-marfil transition-colors hover:bg-laton hover:text-ink"
             >
               Salir
             </button>
