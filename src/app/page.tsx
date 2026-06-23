@@ -20,7 +20,7 @@ const CASO_DEMO = {
     fechaNacimiento: "1944-03-10",
     fechaEvaluacion: "2026-07-15",
     profesional: "Yeida [Apellido], TSF, Lic. #XXXX",
-    tipoEvaluacion: "designacion_tutor" as const,
+    tipoEvaluacion: "Designación de tutor",
   },
   transcripcion: `[Trabajadora Social]: Buenas tardes, ¿cómo se siente hoy doña Carmen?
 [Carmen Rivera, 82 años]: Bien, gracias, aunque a veces se me olvidan las cosas. No sé qué día es hoy.
@@ -305,8 +305,38 @@ export default function Home() {
                 className="rounded border border-slate-300 px-3 py-2 text-sm focus:border-laton focus:outline-none focus:ring-1 focus:ring-laton"
               >
                 <option value="">Seleccionar…</option>
-                <option value="incapacidad">Incapacidad</option>
-                <option value="designacion_tutor">Designación de tutor</option>
+                <optgroup label="Capacidad y tutela">
+                  <option value="Incapacidad">Incapacidad</option>
+                  <option value="Designación de tutor">Designación de tutor</option>
+                  <option value="Capacidad para tomar decisiones">Capacidad para tomar decisiones</option>
+                </optgroup>
+                <optgroup label="Inmigración">
+                  <option value="Inmigración — Dificultad extrema (hardship/waiver)">Dificultad extrema (hardship / waiver)</option>
+                  <option value="Inmigración — VAWA (víctima de violencia)">VAWA (víctima de violencia)</option>
+                  <option value="Inmigración — Visa U (víctima de crimen)">Visa U (víctima de crimen)</option>
+                  <option value="Inmigración — Visa T (víctima de trata humana)">Visa T (víctima de trata humana)</option>
+                  <option value="Inmigración — Asilo">Asilo</option>
+                  <option value="Inmigración — Cancelación de remoción / deportación">Cancelación de remoción / deportación</option>
+                </optgroup>
+                <optgroup label="Familia y menores">
+                  <option value="Custodia de menores">Custodia de menores</option>
+                  <option value="Patria potestad">Patria potestad</option>
+                  <option value="Adopción">Adopción</option>
+                  <option value="Maltrato o negligencia de menores">Maltrato o negligencia de menores</option>
+                </optgroup>
+                <optgroup label="Daños y violencia">
+                  <option value="Daños y perjuicios (daño emocional)">Daños y perjuicios (daño emocional)</option>
+                  <option value="Violencia doméstica (Ley 54)">Violencia doméstica (Ley 54)</option>
+                </optgroup>
+                <optgroup label="Penal / forense">
+                  <option value="Competencia para ser procesado">Competencia para ser procesado</option>
+                  <option value="Responsabilidad criminal (inimputabilidad)">Responsabilidad criminal (inimputabilidad)</option>
+                  <option value="Evaluación de riesgo / peligrosidad">Evaluación de riesgo / peligrosidad</option>
+                </optgroup>
+                <optgroup label="Laboral">
+                  <option value="Incapacidad laboral / compensación">Incapacidad laboral / compensación</option>
+                </optgroup>
+                <option value="Otro">Otro (especificar en el caso)</option>
               </select>
             </div>
             <div className="flex flex-col gap-1">
