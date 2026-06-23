@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generarBorrador } from "@/lib/anthropic";
 
 export const runtime = "nodejs";
-export const maxDuration = 60; // Hobby de Vercel: máximo 60s // generar el informe puede tardar
+export const maxDuration = 300; // Vercel Pro: hasta 300s (la generación tarda ~90-105s) // generar el informe puede tardar
 
 // POST /api/generate
 // Body: { datos, transcripcion, documentosTexto, adjuntos? }
