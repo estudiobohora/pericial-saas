@@ -150,6 +150,11 @@ export default function Home() {
     setDocumentosTexto(CASO_DEMO.documentosTexto);
   }
 
+  async function salir() {
+    await fetch("/api/salir", { method: "POST" });
+    window.location.href = "/acceso";
+  }
+
   async function generar() {
     setLoading(true);
     setError(null);
@@ -249,9 +254,17 @@ export default function Home() {
               INFORMES SOCIO-ECONÓMICOS FORENSES
             </span>
           </div>
-          <span className="rounded border border-laton/40 px-2 py-1 text-[10px] uppercase tracking-wider text-laton-soft">
-            Beta · nombre provisional
-          </span>
+          <div className="flex items-center gap-4">
+            <span className="rounded border border-laton/40 px-2 py-1 text-[10px] uppercase tracking-wider text-laton-soft">
+              Beta · nombre provisional
+            </span>
+            <button
+              onClick={salir}
+              className="text-xs text-laton-soft transition-colors hover:text-marfil"
+            >
+              Salir
+            </button>
+          </div>
         </div>
       </header>
 
