@@ -387,7 +387,10 @@ export default function Home() {
                   className="hidden"
                   onChange={(e) => e.target.files?.[0] && subirAudio(e.target.files[0])}
                 />
-                {subiendoAudio ? "Transcribiendo…" : "🎙️ Subir audio (MP3) de la entrevista"}
+                <svg aria-hidden="true" className="h-4 w-4 text-laton-dark" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+                </svg>
+                <span>{subiendoAudio ? "Transcribiendo…" : "Subir audio (MP3) de la entrevista"}</span>
               </label>
               <span className="text-xs text-slate-400">Whisper transcribe el audio automáticamente.</span>
             </div>
@@ -409,7 +412,10 @@ export default function Home() {
                   className="hidden"
                   onChange={(e) => e.target.files?.[0] && subirDocs(e.target.files[0])}
                 />
-                {subiendoDocs ? "Leyendo documentos…" : "📎 Subir documentos (ZIP)"}
+                <svg aria-hidden="true" className="h-4 w-4 text-laton-dark" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
+                </svg>
+                <span>{subiendoDocs ? "Leyendo documentos…" : "Subir documentos (ZIP)"}</span>
               </label>
               <span className="text-xs text-slate-400">Lee PDF, Word, imágenes y escaneados automáticamente.</span>
             </div>
@@ -425,7 +431,7 @@ export default function Home() {
             <button
               onClick={generar}
               disabled={loading}
-              className="rounded bg-ink px-5 py-2.5 text-sm font-medium text-marfil hover:bg-ink-soft disabled:opacity-50"
+              className="rounded bg-[#b45309] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#97470a] disabled:opacity-50"
             >
               {loading ? "Generando borrador…" : "Generar borrador"}
             </button>
@@ -452,7 +458,7 @@ export default function Home() {
                 </button>
                 <button
                   onClick={exportarWord}
-                  className="rounded bg-laton px-4 py-1.5 text-sm font-medium text-ink hover:bg-laton-soft"
+                  className="rounded bg-ink px-4 py-1.5 text-sm font-medium text-marfil hover:bg-ink-soft"
                 >
                   Exportar a Word
                 </button>

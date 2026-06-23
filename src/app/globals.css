@@ -7,19 +7,40 @@
   --color-laton: #b08d57;
   --color-laton-soft: #c7a878;
   --color-laton-dark: #8a6d3b;
-  --font-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --color-oro: #b45309;
+  --color-oro-dark: #97470a;
+  --font-serif: var(--font-eb-garamond), Georgia, "Times New Roman", serif;
 }
 
 /* Tema "Bufete": tinta + marfil + latón. */
 :root {
-  --background: #f7f3ec; /* marfil */
+  --background: #f7f3ec; /* marfil cálido */
   --foreground: #2a2a28; /* tinta cálida */
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: ui-sans-serif, system-ui, Arial, Helvetica, sans-serif;
+  font-family: var(--font-lato), ui-sans-serif, system-ui, Arial, Helvetica, sans-serif;
+}
+
+/* Checklist UX/accesibilidad del skill */
+button:not(:disabled) {
+  cursor: pointer;
+}
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--color-laton);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
 
 /* ── Vista previa del informe (markdown renderizado) ── */

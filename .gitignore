@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# UI/UX skill (reinstalable con npx uipro-cli)
+.claude/skills/
