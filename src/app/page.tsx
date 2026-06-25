@@ -78,6 +78,20 @@ const REC_OPCIONES = [
 ];
 const REC_INICIAL: Recomendaciones = { seleccionadas: [], adicional: "" };
 
+// Documento HTML imprimible (para exportar a PDF vía el diálogo de impresión).
+function documentoImprimible(inner: string): string {
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Informe Socio-Económico Forense</title>
+<style>
+@page { size: letter; margin: 1in; }
+body { font-family: Georgia, "Times New Roman", serif; font-size: 11pt; color: #1b2a41; line-height: 1.5; max-width: 7in; margin: 0 auto; }
+h1 { font-size: 18pt; } h2 { font-size: 15pt; } h3 { font-size: 13pt; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #999; padding: 4px 6px; vertical-align: top; }
+th { background: #eee; }
+blockquote { border-left: 3px solid #b08d57; padding-left: 10px; color: #444; }
+</style></head><body>${inner}</body></html>`;
+}
+
 // Opciones del dropdown de técnicas/instrumentos (Sección 3 — la llena la profesional).
 const TECNICAS_OPCIONES = [
   "Entrevista directa con la persona evaluada",
@@ -113,6 +127,8 @@ export default function Home() {
   const [met, setMet] = useState<Metodologia>(MET_INICIAL);
   const [docs, setDocs] = useState<DocumentoRev[]>(DOCS_INICIAL);
   const [rec, setRec] = useState<Recomendaciones>(REC_INICIAL);
+  const [exportMenu, setExportMenu] = useState(false);
+  const [guardado, setGuardado] = useState(false);
 
   // Recuerda los datos de la profesional entre informes (se llena solo).
   useEffect(() => {
@@ -122,6 +138,24 @@ export default function Home() {
   useEffect(() => {
     if (datos.profesional) localStorage.setItem("pericial_profesional", datos.profesional);
   }, [datos.profesional]);
+
+  // Restaura el caso guardado (localStorage) al volver.
+  useEffect(() => {
+    const raw = localStorage.getItem("pericial_caso");
+    if (!raw) return;
+    try {
+      const s = JSON.parse(raw);
+      if (s.datos) setDatos(s.datos);
+      if (typeof s.transcripcion === "string") setTranscripcion(s.transcripcion);
+      if (typeof s.documentosTexto === "string") setDocumentosTexto(s.documentosTexto);
+      if (s.borrador) setBorrador(s.borrador);
+      if (Array.isArray(s.docs)) setDocs(s.docs);
+      if (s.met) setMet(s.met);
+      if (s.rec) setRec(s.rec);
+    } catch {
+      // si el guardado está corrupto, lo ignoramos
+    }
+  }, []);
 
   const previewHtml = useMemo(() => {
     if (!borrador) return "";
@@ -220,25 +254,61 @@ export default function Home() {
     }
   }
 
-  async function exportarWord() {
-    const b = {
-      ...borrador,
+  // Fusiona el borrador de IA con las secciones-formulario (2, 3, 6.2).
+  function fusionar(): Borrador {
+    return {
+      ...(borrador as Borrador),
       documentos_revisados: documentosAMarkdown(docs),
       metodologia: metodologiaAMarkdown(met),
       conclusiones: `${borrador?.conclusiones ?? ""}\n\n${recomendacionesAMarkdown(rec)}`,
     };
+  }
+
+  function nombreArchivo(ext: string) {
+    return `Informe_${(datos.numeroCaso || "borrador").replace(/[^\w.-]+/g, "_")}.${ext}`;
+  }
+
+  async function descargarWord(ext: string) {
+    setExportMenu(false);
     const res = await fetch("/api/export", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ datos, borrador: b }),
+      body: JSON.stringify({ datos, borrador: fusionar() }),
     });
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `Informe_${(datos.numeroCaso || "borrador").replace(/[^\w.-]+/g, "_")}.doc`;
+    a.download = nombreArchivo(ext);
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  function exportarGoogleDocs() {
+    // Google Docs importa el archivo de Word; lo descargamos y abrimos Docs para subirlo.
+    descargarWord("doc");
+    window.open("https://docs.google.com/document/u/0/", "_blank");
+  }
+
+  function exportarPDF() {
+    setExportMenu(false);
+    if (!borrador) return;
+    const inner = marked.parse(borradorAMarkdown(fusionar())) as string;
+    const w = window.open("", "_blank");
+    if (!w) return;
+    w.document.write(documentoImprimible(inner));
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 500);
+  }
+
+  function guardar() {
+    localStorage.setItem(
+      "pericial_caso",
+      JSON.stringify({ datos, transcripcion, documentosTexto, borrador, docs, met, rec })
+    );
+    setGuardado(true);
+    setTimeout(() => setGuardado(false), 2000);
   }
 
   const edad = calcularEdad(datos.fechaNacimiento || "", datos.fechaEvaluacion);
@@ -445,25 +515,7 @@ export default function Home() {
         {/* 3. Borrador editable */}
         {borrador && (
           <section className="rounded-lg border border-[#e7decc] bg-white p-5 shadow-sm space-y-5">
-            <div className="flex items-center justify-between">
-              <h2 className="font-serif text-lg text-ink">
-                Borrador editable
-              </h2>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setVerPreview((v) => !v)}
-                  className="rounded border border-laton/50 px-3 py-1.5 text-sm text-ink hover:bg-[#efe9dc]"
-                >
-                  {verPreview ? "Editar" : "Vista previa"}
-                </button>
-                <button
-                  onClick={exportarWord}
-                  className="rounded bg-ink px-4 py-1.5 text-sm font-medium text-marfil hover:bg-ink-soft"
-                >
-                  Exportar a Word
-                </button>
-              </div>
-            </div>
+            <h2 className="font-serif text-lg text-ink">Borrador editable</h2>
 
             {verPreview ? (
               <div className="reporte rounded border border-slate-200 bg-white p-6" dangerouslySetInnerHTML={{ __html: previewHtml }} />
@@ -498,6 +550,54 @@ export default function Home() {
                 <RecomendacionesForm rec={rec} onChange={setRec} />
               </div>
             )}
+
+            {/* Barra de acciones al final */}
+            <div className="flex flex-wrap items-center justify-end gap-2 border-t border-[#e7decc] pt-4">
+              <button
+                onClick={guardar}
+                className="rounded border border-laton/50 px-3 py-1.5 text-sm text-ink hover:bg-[#efe9dc]"
+              >
+                {guardado ? "Guardado ✓" : "Guardar"}
+              </button>
+              <button
+                onClick={() => setVerPreview((v) => !v)}
+                className="rounded border border-laton/50 px-3 py-1.5 text-sm text-ink hover:bg-[#efe9dc]"
+              >
+                {verPreview ? "Editar" : "Vista previa"}
+              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setExportMenu((v) => !v)}
+                  className="inline-flex items-center gap-1.5 rounded bg-ink px-4 py-1.5 text-sm font-medium text-marfil hover:bg-ink-soft"
+                >
+                  Exportar
+                  <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </button>
+                {exportMenu && (
+                  <>
+                    <button
+                      aria-hidden="true"
+                      tabIndex={-1}
+                      onClick={() => setExportMenu(false)}
+                      className="fixed inset-0 z-10 cursor-default"
+                    />
+                    <div className="absolute right-0 z-20 mt-1 w-48 overflow-hidden rounded border border-[#e7decc] bg-white shadow-md">
+                      <button onClick={() => descargarWord("doc")} className="block w-full px-3 py-2 text-left text-sm text-ink hover:bg-[#fbf7ee]">
+                        Word (.doc)
+                      </button>
+                      <button onClick={exportarGoogleDocs} className="block w-full px-3 py-2 text-left text-sm text-ink hover:bg-[#fbf7ee]">
+                        Google Docs
+                      </button>
+                      <button onClick={exportarPDF} className="block w-full px-3 py-2 text-left text-sm text-ink hover:bg-[#fbf7ee]">
+                        PDF
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </section>
         )}
       </main>
