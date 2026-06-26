@@ -37,6 +37,12 @@ const CASO_DEMO = {
 2. Lista de medicamentos: Donepezilo 10mg, Losartán 50mg, Metformina 500mg.`,
     economicos: `1. Estado de cuenta bancario (Banco Popular, 06/2026): Cuenta de ahorros con balance de $8,450. Pensión de Seguro Social de $1,180/mes.`,
   },
+  docs: [
+    { nombre: "Petición de tutela.pdf", tipo: "Documento legal / judicial", fecha: "05/2026", revisado: true, categoria: "legales" },
+    { nombre: "Informe médico — Dr. Méndez.pdf", tipo: "Informe médico", fecha: "03/2026", revisado: true, categoria: "medicos" },
+    { nombre: "Lista de medicamentos.pdf", tipo: "Lista de medicamentos", fecha: "", revisado: true, categoria: "medicos" },
+    { nombre: "Estado de cuenta — Banco Popular.pdf", tipo: "Estado de cuenta bancario", fecha: "06/2026", revisado: true, categoria: "economicos" },
+  ] as DocumentoRev[],
 };
 
 const SECCIONES_TOP: { key: keyof Borrador; label: string }[] = [
@@ -149,10 +155,12 @@ const MET_INICIAL: Metodologia = {
 // ── Guardado local de casos: biblioteca de varios casos en localStorage ──
 // (Camino A: sin login. Cada caso se guarda con nombre y fecha; el activo se
 // auto-restaura al volver. El paso a la nube/Supabase queda para vender.)
+// Nota: el TEXTO extraído de los documentos (docTextos) NO se persiste — solo
+// vive en memoria para usarse al generar. Se guarda únicamente la lista de
+// documentos (docs: nombres/categoría/fecha), no su contenido (confidencialidad).
 type CasoData = {
   datos: DatosCaso;
   transcripcion: string;
-  docTextos: DocTextos;
   borrador: Borrador | null;
   docs: DocumentoRev[];
   met: Metodologia;
@@ -228,16 +236,9 @@ export default function Home() {
     if (legacy && !lista.length) {
       try {
         const s = JSON.parse(legacy);
-        const docTx: DocTextos =
-          s.docTextos && typeof s.docTextos === "object"
-            ? { ...DOC_TEXTOS_INICIAL, ...s.docTextos }
-            : typeof s.documentosTexto === "string"
-            ? { ...DOC_TEXTOS_INICIAL, legales: s.documentosTexto }
-            : DOC_TEXTOS_INICIAL;
         const data: CasoData = {
           datos: s.datos || {},
           transcripcion: typeof s.transcripcion === "string" ? s.transcripcion : "",
-          docTextos: docTx,
           borrador: s.borrador || null,
           docs: Array.isArray(s.docs) ? s.docs : [],
           met: s.met || MET_INICIAL,
@@ -273,7 +274,7 @@ export default function Home() {
     const t = setTimeout(() => guardarAhora(data, serial), 800);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [datos, transcripcion, docTextos, borrador, docs, met, rec]);
+  }, [datos, transcripcion, borrador, docs, met, rec]);
 
   const previewHtml = useMemo(() => {
     if (!borrador) return "";
@@ -299,14 +300,15 @@ export default function Home() {
   function cargarDemo() {
     setDatos(CASO_DEMO.datos);
     setTranscripcion(CASO_DEMO.transcripcion);
-    setDocTextos(CASO_DEMO.docTextos);
+    setDocTextos(CASO_DEMO.docTextos); // texto solo en memoria (no se guarda)
+    setDocs(CASO_DEMO.docs);
   }
 
   // ── Biblioteca de casos (guardado local) ──
 
-  // Estado actual del caso en pantalla, listo para guardar.
+  // Estado actual del caso en pantalla, listo para guardar (sin docTextos).
   function datosActuales(): CasoData {
-    return { datos, transcripcion, docTextos, borrador, docs, met, rec };
+    return { datos, transcripcion, borrador, docs, met, rec };
   }
 
   // ¿Vale la pena guardar? (Ignora la profesional recordada: un caso vacío
@@ -315,22 +317,22 @@ export default function Home() {
     const { profesional, ...resto } = d.datos || {};
     void profesional;
     const algunDato = Object.values(resto).some((v) => typeof v === "string" && v.trim());
-    const algunDoc = Object.values(d.docTextos || {}).some((v) => v.trim());
+    const algunDoc = (d.docs || []).some((doc) => doc.nombre || doc.tipo || doc.fecha);
     return Boolean(algunDato || d.transcripcion.trim() || algunDoc || d.borrador);
   }
 
   // Carga un caso guardado a la pantalla (y fija su huella para no re-guardarlo).
+  // El texto de los documentos no se guarda → se limpia (hay que re-subir para regenerar).
   function aplicarCaso(c: CasoGuardado) {
     const datosN = c.data.datos || {};
     const transcN = c.data.transcripcion || "";
-    const docTxN = { ...DOC_TEXTOS_INICIAL, ...(c.data.docTextos || {}) };
     const borrN = c.data.borrador || null;
     const docsN = Array.isArray(c.data.docs) ? c.data.docs : [];
     const metN = c.data.met || MET_INICIAL;
     const recN = c.data.rec || REC_INICIAL;
     setDatos(datosN);
     setTranscripcion(transcN);
-    setDocTextos(docTxN);
+    setDocTextos(DOC_TEXTOS_INICIAL);
     setBorrador(borrN);
     setDocs(docsN);
     setMet(metN);
@@ -338,7 +340,6 @@ export default function Home() {
     ultimoSerial.current = JSON.stringify({
       datos: datosN,
       transcripcion: transcN,
-      docTextos: docTxN,
       borrador: borrN,
       docs: docsN,
       met: metN,
@@ -541,6 +542,12 @@ export default function Home() {
     } finally {
       setSubiendoCat(null);
     }
+  }
+
+  // Quita todos los documentos de una categoría (texto en memoria + lista).
+  function limpiarCategoria(categoria: CatKey) {
+    setDocTextos((prev) => ({ ...prev, [categoria]: "" }));
+    setDocs((prev) => prev.filter((d) => d.categoria !== categoria));
   }
 
   // Fusiona el borrador de IA con las secciones-formulario (2, 3, 6.2).
@@ -835,34 +842,66 @@ export default function Home() {
           {/* Documentos divididos en tres categorías */}
           <div className="space-y-4">
             <p className="text-xs font-medium text-slate-500">
-              Documentos del caso (sube cada categoría por separado — ZIP, PDF, Word o imagen):
+              Documentos del caso (sube cada categoría por separado — ZIP, PDF, Word o imagen).{" "}
+              <span className="font-normal text-slate-400">
+                Por confidencialidad, el contenido no se muestra ni se guarda: la IA lo lee solo al generar el borrador.
+              </span>
             </p>
-            {CATEGORIAS_DOC.map((c) => (
-              <div key={c.key} className="space-y-2 rounded-md border border-slate-200 bg-[#fbf7ee] p-3">
-                <div className="flex flex-wrap items-center gap-3">
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                    <input
-                      type="file"
-                      accept=".zip,.pdf,.doc,.docx,.txt,.md,.csv,image/*"
-                      className="hidden"
-                      onChange={(e) => e.target.files?.[0] && subirDocs(e.target.files[0], c.key)}
-                    />
-                    <svg aria-hidden="true" className="h-4 w-4 text-laton-dark" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
-                    </svg>
-                    <span>{subiendoCat === c.key ? "Leyendo…" : `Subir — ${c.label}`}</span>
-                  </label>
-                  <span className="text-xs text-slate-400">{c.hint}</span>
+            {CATEGORIAS_DOC.map((c) => {
+              const archivos = docs.filter((d) => d.categoria === c.key && (d.nombre || d.fecha));
+              const tieneTexto = Boolean(docTextos[c.key].trim());
+              return (
+                <div key={c.key} className="space-y-2 rounded-md border border-slate-200 bg-[#fbf7ee] p-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                      <input
+                        type="file"
+                        accept=".zip,.pdf,.doc,.docx,.txt,.md,.csv,image/*"
+                        className="hidden"
+                        onChange={(e) => e.target.files?.[0] && subirDocs(e.target.files[0], c.key)}
+                      />
+                      <svg aria-hidden="true" className="h-4 w-4 text-laton-dark" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
+                      </svg>
+                      <span>{subiendoCat === c.key ? "Leyendo…" : `Subir — ${c.label}`}</span>
+                    </label>
+                    <span className="text-xs text-slate-400">{c.hint}</span>
+                  </div>
+
+                  {archivos.length === 0 ? (
+                    <p className="text-xs text-slate-400">Aún no has subido documentos de esta categoría.</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <ul className="flex flex-wrap gap-2">
+                        {archivos.map((d, i) => (
+                          <li
+                            key={i}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-laton/40 bg-white px-2.5 py-1 text-xs text-ink"
+                          >
+                            <svg aria-hidden="true" className="h-3.5 w-3.5 text-laton-dark" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                            </svg>
+                            <span className="max-w-[16rem] truncate">{d.nombre || "documento"}</span>
+                            {d.fecha ? <span className="text-slate-400">· {d.fecha}</span> : null}
+                          </li>
+                        ))}
+                      </ul>
+                      {!tieneTexto && (
+                        <p className="text-[11px] text-amber-700">
+                          Documentos del caso guardado — vuelve a subirlos para incluirlos en el análisis.
+                        </p>
+                      )}
+                      <button
+                        onClick={() => limpiarCategoria(c.key)}
+                        className="text-[11px] text-slate-400 hover:text-red-600"
+                      >
+                        Quitar documentos de esta categoría
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <AreaTexto
-                  label={c.label}
-                  hint="(Sube el archivo arriba, o pega el texto.)"
-                  value={docTextos[c.key]}
-                  onChange={(v) => setDocTextos((prev) => ({ ...prev, [c.key]: v }))}
-                  rows={4}
-                />
-              </div>
-            ))}
+              );
+            })}
           </div>
           <div className="flex items-center gap-3">
             <button
