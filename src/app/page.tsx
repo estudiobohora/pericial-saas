@@ -93,10 +93,12 @@ const DOC_TEXTOS_INICIAL: DocTextos = { legales: "", medicos: "", economicos: ""
 // Opciones del dropdown de Categoría en la tabla de Documentos Revisados.
 const CATEGORIA_OPCIONES = CATEGORIAS_DOC.map((c) => ({ value: c.key, label: c.label }));
 
-// Sección 1: dropdowns de Región Judicial (13 regiones de PR) y Relación del peticionario.
-const REGIONES_JUDICIALES = [
-  "Aguadilla", "Aibonito", "Arecibo", "Bayamón", "Caguas", "Carolina", "Fajardo",
-  "Guayama", "Humacao", "Mayagüez", "Ponce", "San Juan", "Utuado",
+// Sección 1: dropdowns de Ubicación (situación de vivienda) y Relación del peticionario.
+const UBICACIONES = [
+  "Residencia propia",
+  "Residencia de familia o pariente",
+  "Hogar de cuidado prolongado",
+  "Otro",
 ];
 const RELACIONES = [
   "Hijo/a", "Cónyuge", "Hermano/a", "Nieto/a", "Sobrino/a", "Padre/Madre",
@@ -108,13 +110,8 @@ const REC_OPCIONES = [
   "Que el Honorable Tribunal declare la incapacidad legal de la persona evaluada.",
   "Que se designe un tutor/a legal para la persona y sus bienes.",
   "Que el tutor/a designado rinda cuentas periódicas al Tribunal.",
-  "Que se ordene un plan formal de cuidado supervisado.",
-  "Que se realicen evaluaciones médicas periódicas de seguimiento.",
-  "Que se coordinen los servicios de apoyo comunitario y gubernamental disponibles.",
-  "Que se evalúen las necesidades del cuidador/a principal.",
-  "Que se investigue y supervise el manejo de los recursos económicos de la persona evaluada.",
 ];
-const REC_INICIAL: Recomendaciones = { seleccionadas: [], adicional: "" };
+const REC_INICIAL: Recomendaciones = { seleccionadas: [], adicional: "", explicacion: "" };
 
 // Documento HTML imprimible (para exportar a PDF vía el diálogo de impresión).
 function documentoImprimible(inner: string): string {
@@ -467,6 +464,27 @@ export default function Home() {
   }
 
   async function generar() {
+    // Blindaje 1: documentos listados pero sin contenido cargado (caso restaurado
+    // o aún sin leer) → la IA no podría analizarlos. Pídela re-subir antes de generar.
+    const faltanContenido = CATEGORIAS_DOC.filter(
+      (c) => docs.some((d) => d.categoria === c.key) && !docTextos[c.key].trim()
+    );
+    if (faltanContenido.length) {
+      setError(
+        `Vuelve a subir los documentos de: ${faltanContenido
+          .map((c) => c.label)
+          .join(", ")}. Por confidencialidad su contenido no se guarda, así que hay que subirlos otra vez para que el análisis los incluya.`
+      );
+      return;
+    }
+    // Blindaje 2: no hay nada que analizar → el borrador saldría todo en [PENDIENTE].
+    if (!transcripcion.trim() && !documentosCombinados().trim()) {
+      setError(
+        "Sube la transcripción de la entrevista y/o documentos del caso antes de generar — el análisis se basa en ellos."
+      );
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -773,14 +791,14 @@ export default function Home() {
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-slate-600">Región Judicial / Tribunal</label>
+              <label className="text-xs font-medium text-slate-600">Ubicación</label>
               <select
-                value={datos.regionJudicial || ""}
-                onChange={(e) => setCampoDatos("regionJudicial", e.target.value)}
+                value={datos.ubicacion || ""}
+                onChange={(e) => setCampoDatos("ubicacion", e.target.value)}
                 className="rounded border border-slate-300 px-3 py-2 text-sm focus:border-laton focus:outline-none focus:ring-1 focus:ring-laton"
               >
                 <option value="">Seleccionar…</option>
-                {REGIONES_JUDICIALES.map((o) => (
+                {UBICACIONES.map((o) => (
                   <option key={o} value={o}>
                     {o}
                   </option>
@@ -1360,6 +1378,15 @@ function RecomendacionesForm({ rec, onChange }: { rec: Recomendaciones; onChange
           onChange={(e) => onChange({ ...rec, adicional: e.target.value })}
           className="min-h-[90px] resize-y rounded border border-slate-300 px-3 py-2 text-sm focus:border-laton focus:outline-none focus:ring-1 focus:ring-laton"
           placeholder="Recomendaciones específicas que no estén en la lista…"
+        />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label className="text-xs font-semibold text-slate-600">Explicación / fundamento de las recomendaciones</label>
+        <textarea
+          value={rec.explicacion || ""}
+          onChange={(e) => onChange({ ...rec, explicacion: e.target.value })}
+          className="min-h-[90px] resize-y rounded border border-slate-300 px-3 py-2 text-sm focus:border-laton focus:outline-none focus:ring-1 focus:ring-laton"
+          placeholder="Explica por qué se hacen estas recomendaciones (fundamento en los hallazgos del caso)…"
         />
       </div>
     </div>

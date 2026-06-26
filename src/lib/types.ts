@@ -9,7 +9,7 @@ export type DatosCaso = {
   tipoEvaluacion?: "incapacidad" | "designacion_tutor" | string;
   personaEvaluada?: string;
   fechaNacimiento?: string;
-  regionJudicial?: string;
+  ubicacion?: string; // dónde reside la persona evaluada (situación de vivienda)
   peticionario?: string;
   relacionPeticionario?: string;
 };
@@ -53,4 +53,5 @@ export type DocumentoRev = {
 export type Recomendaciones = {
   seleccionadas: string[];
   adicional: string;
+  explicacion?: string; // fundamento / explicación de las recomendaciones
 };

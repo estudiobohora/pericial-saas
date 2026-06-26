@@ -11,6 +11,9 @@ export function recomendacionesAMarkdown(rec: Recomendaciones): string {
     bloques.push(rec.adicional.trim());
   }
   out.push(bloques.length ? bloques.join("\n\n") : "_[Pendiente: marcar las recomendaciones al Tribunal.]_");
+  if (rec.explicacion?.trim()) {
+    out.push(`**Fundamento de las recomendaciones:**\n\n${rec.explicacion.trim()}`);
+  }
   return out.join("\n\n");
 }
 

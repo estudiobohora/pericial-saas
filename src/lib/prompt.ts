@@ -42,7 +42,18 @@ REGLAS INNEGOCIABLES:
   Es preferible un análisis breve y verificable que uno extenso con datos inventados.
 - Cita la fuente cuando sea posible (ej. "según el documento médico del Dr. X" o
   "según declaró la persona evaluada en la entrevista").
-- Distingue claramente hechos observados de interpretaciones profesionales.`;
+- Distingue claramente hechos observados de interpretaciones profesionales.
+- PROFUNDIDAD (lo más importante para la utilidad del informe): cuando SÍ haya
+  transcripción y/o documentos, el Análisis debe ser EXHAUSTIVO y específico de
+  ESTE caso. Para CADA dimensión (económica, de salud, psicosocial), recorre cada
+  documento y cada parte de la entrevista, EXTRAE todos los datos relevantes
+  (cifras, fechas, diagnósticos, nombres, hechos, relaciones) y ANALIZA qué
+  significan e implican para el tipo de evaluación — no solo los listes. Prohibido
+  el texto genérico o de plantilla: cada afirmación debe referirse a un dato
+  concreto de este caso y citar su fuente. La meta es que la profesional REVISE y
+  AJUSTE un análisis ya hecho a fondo, no que lo escriba desde cero.
+- Reserva [PENDIENTE] SOLO para información que realmente falte; nunca lo uses
+  como sustituto de analizar lo que sí está disponible en las fuentes.`;
 
 const MESES = [
   "enero", "febrero", "marzo", "abril", "mayo", "junio",
@@ -86,7 +97,7 @@ export function construirPromptUsuario(args: {
 - Fecha de evaluación: ${datos.fechaEvaluacion ? formatFechaLarga(datos.fechaEvaluacion) : "[PENDIENTE]"}
 - Profesional que rinde el informe: ${datos.profesional || "[PENDIENTE]"}
 - Tipo de evaluación: ${datos.tipoEvaluacion || "[PENDIENTE]"}
-- Región Judicial / Tribunal: ${datos.regionJudicial || "[PENDIENTE]"}
+- Ubicación / situación de vivienda de la persona evaluada: ${datos.ubicacion || "[PENDIENTE]"}
 - Peticionario/a: ${datos.peticionario || "[PENDIENTE]"}
 - Relación del peticionario con la persona evaluada: ${datos.relacionPeticionario || "[PENDIENTE]"}
 
@@ -105,14 +116,14 @@ bloques de código markdown) con esta forma exacta:
   "identificacion": "texto markdown de la sección 1: Identificación del Caso",
   "transcripcion": "texto markdown de la sección 4: transcripción organizada por hablante cuando sea posible",
   "analisis": {
-    "economico": "Análisis Económico de la persona evaluada (markdown)",
-    "salud": "Análisis de Salud: condiciones incapacitantes e historial médico relevante extraído de los documentos (markdown)",
-    "psicosocial": "Análisis Psicosocial (SECCIÓN PRINCIPAL, la más extensa): dinámica familiar, red de apoyo, funcionamiento psicosocial y necesidades identificadas (markdown)"
+    "economico": "Análisis Económico EXHAUSTIVO de la persona evaluada (markdown): recorre los documentos económicos y la entrevista y extrae CADA dato (ingresos, pensiones, balances, propiedades, deudas, gastos, dependientes, quién maneja el dinero); cita la fuente de cada dato y analiza qué implica para la capacidad de la persona de administrar sus recursos y para el tipo de evaluación. Profundo y específico, no genérico.",
+    "salud": "Análisis de Salud EXHAUSTIVO (markdown): extrae de los documentos médicos y la entrevista cada diagnóstico, condición, medicamento, resultado de prueba, nivel funcional y pronóstico; cita la fuente y analiza su impacto en la capacidad/funcionamiento de la persona y en el tipo de evaluación. No te limites a listar: interpreta.",
+    "psicosocial": "Análisis Psicosocial (SECCIÓN PRINCIPAL, la MÁS extensa y detallada, markdown): analiza a fondo dinámica familiar, red de apoyo, cuidador principal, conflictos, funcionamiento psicosocial, factores de riesgo y de protección, y necesidades identificadas; apóyate en cada elemento concreto de la entrevista y los documentos, con citas. Cada subsección debe reflejar datos reales de este caso."
   },
   "conclusiones": "texto markdown SOLO de las Conclusiones (6.1) basadas en el análisis. NO incluyas recomendaciones — esas las marca la profesional aparte."
 }
 
 NOTA: Las Secciones 2 (Documentos Revisados) y 3 (Metodología) NO las generes — las completa la profesional directamente en la herramienta. No las incluyas en el JSON.
 
-Recuerda: el Análisis (5) y las Conclusiones (6.1) deben derivarse SOLO de la transcripción y los documentos de arriba — no inventes absolutamente nada (ni hechos, ni cifras, ni fechas, ni diagnósticos, ni nombres). Usa "[PENDIENTE: ...]" donde falte información.`;
+Recuerda DOS cosas a la vez: (1) el Análisis (5) y las Conclusiones (6.1) deben derivarse SOLO de la transcripción y los documentos de arriba — no inventes nada (ni hechos, cifras, fechas, diagnósticos o nombres); usa "[PENDIENTE: ...]" donde falte información. (2) Pero cuando SÍ haya información, analízala A FONDO en cada dimensión, extrayendo y citando cada dato concreto del caso — el valor de la herramienta es entregar un análisis ya profundo que la profesional revisa y ajusta, no un resumen genérico.`;
 }
