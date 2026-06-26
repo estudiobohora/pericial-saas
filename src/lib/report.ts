@@ -14,7 +14,21 @@ export function recomendacionesAMarkdown(rec: Recomendaciones): string {
   return out.join("\n\n");
 }
 
-// Sección 2: tabla de documentos con 4ta columna "Revisado".
+// Sección 2: tabla de documentos con 4ta columna "Revisado", agrupada por
+// categoría (legales / médicos / económicos) cuando los documentos la tienen.
+const CATEGORIAS_DOC: { key: string; label: string }[] = [
+  { key: "legales", label: "Documentos legales" },
+  { key: "medicos", label: "Documentos médicos" },
+  { key: "economicos", label: "Documentos económicos" },
+];
+
+function tablaDocs(rows: DocumentoRev[]): string {
+  const filas = rows.map(
+    (d) => `| ${esc(d.nombre)} | ${esc(d.tipo)} | ${esc(d.fecha)} | ${d.revisado ? "Sí" : "No"} |`
+  );
+  return ["| Nombre del documento | Tipo | Fecha | Revisado |", "|---|---|---|---|", ...filas].join("\n");
+}
+
 export function documentosAMarkdown(docs: DocumentoRev[]): string {
   const out: string[] = ["# SECCIÓN 2: DOCUMENTOS REVISADOS"];
   const list = docs.filter((d) => d.nombre || d.tipo || d.fecha);
@@ -22,10 +36,21 @@ export function documentosAMarkdown(docs: DocumentoRev[]): string {
     out.push("_[Pendiente: añadir los documentos sometidos para revisión.]_");
     return out.join("\n\n");
   }
-  const filas = list.map(
-    (d) => `| ${esc(d.nombre)} | ${esc(d.tipo)} | ${esc(d.fecha)} | ${d.revisado ? "Sí" : "No"} |`
-  );
-  out.push(["| Nombre del documento | Tipo | Fecha | Revisado |", "|---|---|---|---|", ...filas].join("\n"));
+
+  let agrupados = false;
+  for (const c of CATEGORIAS_DOC) {
+    const rows = list.filter((d) => d.categoria === c.key);
+    if (rows.length) {
+      out.push(`## ${c.label}`);
+      out.push(tablaDocs(rows));
+      agrupados = true;
+    }
+  }
+  const sinCategoria = list.filter((d) => !CATEGORIAS_DOC.some((c) => c.key === d.categoria));
+  if (sinCategoria.length) {
+    if (agrupados) out.push("## Otros documentos");
+    out.push(tablaDocs(sinCategoria));
+  }
   return out.join("\n\n");
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { marked } from "marked";
 import type { Borrador, DatosCaso, Metodologia, DocumentoRev, Recomendaciones } from "@/lib/types";
 import {
@@ -20,7 +20,7 @@ const CASO_DEMO = {
     fechaNacimiento: "1944-03-10",
     fechaEvaluacion: "2026-07-15",
     profesional: "Yeida [Apellido], TSF, Lic. #XXXX",
-    tipoEvaluacion: "Designación de tutor",
+    tipoEvaluacion: "Declaración de Incapacidad y Nombramiento de Tutor",
   },
   transcripcion: `[Trabajadora Social]: Buenas tardes, ¿cómo se siente hoy doña Carmen?
 [Carmen Rivera, 82 años]: Bien, gracias, aunque a veces se me olvidan las cosas. No sé qué día es hoy.
@@ -31,9 +31,12 @@ const CASO_DEMO = {
 [Marta (hija)]: Mami fue diagnosticada con demencia hace dos años. Ya no puede quedarse sola. Yo dejé mi trabajo a medio tiempo para cuidarla. Pedro ayuda con dinero a veces pero no está de acuerdo en que yo sea la tutora.
 [TS]: ¿Hay conflicto entre ustedes los hermanos?
 [Marta]: Sí, Pedro dice que yo uso el dinero de mami. No es cierto, yo guardo todos los recibos.`,
-  documentosTexto: `1. Informe Médico (Dr. L. Méndez, Neurología, 03/2026): Diagnóstico de demencia tipo Alzheimer, etapa moderada. MMSE 14/30. Requiere supervisión constante.
-2. Estado de cuenta bancario (Banco Popular, 06/2026): Cuenta de ahorros con balance de $8,450. Pensión de Seguro Social de $1,180/mes.
-3. Lista de medicamentos: Donepezilo 10mg, Losartán 50mg, Metformina 500mg.`,
+  docTextos: {
+    legales: `1. Petición de tutela (Tribunal de Primera Instancia, Sala de San Juan, 05/2026): Marta Rivera solicita ser designada tutora de su madre, Carmen Rivera Soto, por incapacidad sobrevenida.`,
+    medicos: `1. Informe Médico (Dr. L. Méndez, Neurología, 03/2026): Diagnóstico de demencia tipo Alzheimer, etapa moderada. MMSE 14/30. Requiere supervisión constante.
+2. Lista de medicamentos: Donepezilo 10mg, Losartán 50mg, Metformina 500mg.`,
+    economicos: `1. Estado de cuenta bancario (Banco Popular, 06/2026): Cuenta de ahorros con balance de $8,450. Pensión de Seguro Social de $1,180/mes.`,
+  },
 };
 
 const SECCIONES_TOP: { key: keyof Borrador; label: string }[] = [
@@ -53,7 +56,36 @@ const TIPOS_DOC = [
   "Foto / evidencia",
   "Otro",
 ];
-const DOCS_INICIAL: DocumentoRev[] = [{ nombre: "", tipo: "", fecha: "", revisado: true }];
+const DOCS_INICIAL: DocumentoRev[] = [];
+
+// Las tres categorías en que se dividen los documentos de la entrevista.
+const CATEGORIAS_DOC = [
+  {
+    key: "legales",
+    label: "Documentos legales",
+    hint: "Peticiones, órdenes, demandas, declaraciones juradas, resoluciones…",
+    titulo: "DOCUMENTOS LEGALES",
+  },
+  {
+    key: "medicos",
+    label: "Documentos médicos",
+    hint: "Informes médicos/psicológicos, récords hospitalarios, medicamentos…",
+    titulo: "DOCUMENTOS MÉDICOS",
+  },
+  {
+    key: "economicos",
+    label: "Documentos económicos",
+    hint: "Estados de cuenta, ingresos, pensiones, gastos, deudas…",
+    titulo: "DOCUMENTOS ECONÓMICOS",
+  },
+] as const;
+
+type CatKey = (typeof CATEGORIAS_DOC)[number]["key"];
+type DocTextos = Record<CatKey, string>;
+const DOC_TEXTOS_INICIAL: DocTextos = { legales: "", medicos: "", economicos: "" };
+
+// Opciones del dropdown de Categoría en la tabla de Documentos Revisados.
+const CATEGORIA_OPCIONES = CATEGORIAS_DOC.map((c) => ({ value: c.key, label: c.label }));
 
 // Sección 1: dropdowns de Región Judicial (13 regiones de PR) y Relación del peticionario.
 const REGIONES_JUDICIALES = [
@@ -114,21 +146,68 @@ const MET_INICIAL: Metodologia = {
   observaciones: "",
 };
 
+// ── Guardado local de casos: biblioteca de varios casos en localStorage ──
+// (Camino A: sin login. Cada caso se guarda con nombre y fecha; el activo se
+// auto-restaura al volver. El paso a la nube/Supabase queda para vender.)
+type CasoData = {
+  datos: DatosCaso;
+  transcripcion: string;
+  docTextos: DocTextos;
+  borrador: Borrador | null;
+  docs: DocumentoRev[];
+  met: Metodologia;
+  rec: Recomendaciones;
+};
+type CasoGuardado = { id: string; nombre: string; actualizado: number; data: CasoData };
+
+const LS_CASOS = "pericial_casos"; // biblioteca de casos
+const LS_ACTUAL = "pericial_caso_actual"; // id del caso activo
+const LS_LEGACY = "pericial_caso"; // guardado viejo de una sola ranura (migración)
+
+function leerCasos(): CasoGuardado[] {
+  try {
+    const arr = JSON.parse(localStorage.getItem(LS_CASOS) || "[]");
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+function guardarCasos(cs: CasoGuardado[]) {
+  localStorage.setItem(LS_CASOS, JSON.stringify(cs));
+}
+function nombreDeCaso(d: DatosCaso): string {
+  return d.nombreCaso?.trim() || d.numeroCaso?.trim() || d.personaEvaluada?.trim() || "Caso sin título";
+}
+function nuevoId(): string {
+  try {
+    return crypto.randomUUID();
+  } catch {
+    return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+}
+
 export default function Home() {
   const [datos, setDatos] = useState<DatosCaso>({});
   const [transcripcion, setTranscripcion] = useState("");
-  const [documentosTexto, setDocumentosTexto] = useState("");
+  const [docTextos, setDocTextos] = useState<DocTextos>(DOC_TEXTOS_INICIAL);
   const [borrador, setBorrador] = useState<Borrador | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [verPreview, setVerPreview] = useState(false);
   const [subiendoAudio, setSubiendoAudio] = useState(false);
-  const [subiendoDocs, setSubiendoDocs] = useState(false);
+  const [subiendoCat, setSubiendoCat] = useState<CatKey | null>(null);
   const [met, setMet] = useState<Metodologia>(MET_INICIAL);
   const [docs, setDocs] = useState<DocumentoRev[]>(DOCS_INICIAL);
   const [rec, setRec] = useState<Recomendaciones>(REC_INICIAL);
   const [exportMenu, setExportMenu] = useState(false);
-  const [guardado, setGuardado] = useState(false);
+
+  // Guardado local: biblioteca de casos, caso activo y estado del auto-guardado.
+  const [casos, setCasos] = useState<CasoGuardado[]>([]);
+  const [casoActualId, setCasoActualId] = useState<string>("");
+  const [estadoGuardado, setEstadoGuardado] = useState<"idle" | "sin" | "guardando" | "guardado">("idle");
+  const [ultimoGuardado, setUltimoGuardado] = useState<number | null>(null);
+  const [mostrarCasos, setMostrarCasos] = useState(false);
+  const ultimoSerial = useRef<string>(""); // huella del último estado guardado (evita guardados redundantes)
 
   // Recuerda los datos de la profesional entre informes (se llena solo).
   useEffect(() => {
@@ -139,23 +218,62 @@ export default function Home() {
     if (datos.profesional) localStorage.setItem("pericial_profesional", datos.profesional);
   }, [datos.profesional]);
 
-  // Restaura el caso guardado (localStorage) al volver.
+  // Al montar: carga la biblioteca, migra el guardado viejo si existe, y
+  // restaura el caso activo.
   useEffect(() => {
-    const raw = localStorage.getItem("pericial_caso");
-    if (!raw) return;
-    try {
-      const s = JSON.parse(raw);
-      if (s.datos) setDatos(s.datos);
-      if (typeof s.transcripcion === "string") setTranscripcion(s.transcripcion);
-      if (typeof s.documentosTexto === "string") setDocumentosTexto(s.documentosTexto);
-      if (s.borrador) setBorrador(s.borrador);
-      if (Array.isArray(s.docs)) setDocs(s.docs);
-      if (s.met) setMet(s.met);
-      if (s.rec) setRec(s.rec);
-    } catch {
-      // si el guardado está corrupto, lo ignoramos
+    let lista = leerCasos();
+
+    // Migración: el guardado viejo de una sola ranura pasa a ser un caso.
+    const legacy = localStorage.getItem(LS_LEGACY);
+    if (legacy && !lista.length) {
+      try {
+        const s = JSON.parse(legacy);
+        const docTx: DocTextos =
+          s.docTextos && typeof s.docTextos === "object"
+            ? { ...DOC_TEXTOS_INICIAL, ...s.docTextos }
+            : typeof s.documentosTexto === "string"
+            ? { ...DOC_TEXTOS_INICIAL, legales: s.documentosTexto }
+            : DOC_TEXTOS_INICIAL;
+        const data: CasoData = {
+          datos: s.datos || {},
+          transcripcion: typeof s.transcripcion === "string" ? s.transcripcion : "",
+          docTextos: docTx,
+          borrador: s.borrador || null,
+          docs: Array.isArray(s.docs) ? s.docs : [],
+          met: s.met || MET_INICIAL,
+          rec: s.rec || REC_INICIAL,
+        };
+        const caso: CasoGuardado = { id: nuevoId(), nombre: nombreDeCaso(data.datos), actualizado: Date.now(), data };
+        lista = [caso];
+        guardarCasos(lista);
+        localStorage.setItem(LS_ACTUAL, caso.id);
+      } catch {
+        // guardado viejo corrupto → se ignora
+      }
+      localStorage.removeItem(LS_LEGACY);
+    }
+
+    setCasos(lista);
+    const actual = lista.find((c) => c.id === (localStorage.getItem(LS_ACTUAL) || ""));
+    if (actual) {
+      aplicarCaso(actual);
+      setCasoActualId(actual.id);
+      setUltimoGuardado(actual.actualizado);
+      setEstadoGuardado("guardado");
     }
   }, []);
+
+  // Auto-guardado: cuando el caso activo cambia de verdad, lo guarda (debounce).
+  useEffect(() => {
+    const data = datosActuales();
+    const serial = JSON.stringify(data);
+    if (serial === ultimoSerial.current) return; // nada cambió
+    if (!hayContenido(data)) return; // no guardar casos vacíos
+    setEstadoGuardado("sin");
+    const t = setTimeout(() => guardarAhora(data, serial), 800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [datos, transcripcion, docTextos, borrador, docs, met, rec]);
 
   const previewHtml = useMemo(() => {
     if (!borrador) return "";
@@ -181,12 +299,170 @@ export default function Home() {
   function cargarDemo() {
     setDatos(CASO_DEMO.datos);
     setTranscripcion(CASO_DEMO.transcripcion);
-    setDocumentosTexto(CASO_DEMO.documentosTexto);
+    setDocTextos(CASO_DEMO.docTextos);
   }
+
+  // ── Biblioteca de casos (guardado local) ──
+
+  // Estado actual del caso en pantalla, listo para guardar.
+  function datosActuales(): CasoData {
+    return { datos, transcripcion, docTextos, borrador, docs, met, rec };
+  }
+
+  // ¿Vale la pena guardar? (Ignora la profesional recordada: un caso vacío
+  // que solo tenga ese campo no debe crear una entrada.)
+  function hayContenido(d: CasoData): boolean {
+    const { profesional, ...resto } = d.datos || {};
+    void profesional;
+    const algunDato = Object.values(resto).some((v) => typeof v === "string" && v.trim());
+    const algunDoc = Object.values(d.docTextos || {}).some((v) => v.trim());
+    return Boolean(algunDato || d.transcripcion.trim() || algunDoc || d.borrador);
+  }
+
+  // Carga un caso guardado a la pantalla (y fija su huella para no re-guardarlo).
+  function aplicarCaso(c: CasoGuardado) {
+    const datosN = c.data.datos || {};
+    const transcN = c.data.transcripcion || "";
+    const docTxN = { ...DOC_TEXTOS_INICIAL, ...(c.data.docTextos || {}) };
+    const borrN = c.data.borrador || null;
+    const docsN = Array.isArray(c.data.docs) ? c.data.docs : [];
+    const metN = c.data.met || MET_INICIAL;
+    const recN = c.data.rec || REC_INICIAL;
+    setDatos(datosN);
+    setTranscripcion(transcN);
+    setDocTextos(docTxN);
+    setBorrador(borrN);
+    setDocs(docsN);
+    setMet(metN);
+    setRec(recN);
+    ultimoSerial.current = JSON.stringify({
+      datos: datosN,
+      transcripcion: transcN,
+      docTextos: docTxN,
+      borrador: borrN,
+      docs: docsN,
+      met: metN,
+      rec: recN,
+    });
+  }
+
+  // Guarda el caso activo en la biblioteca (crea el id la primera vez).
+  function guardarAhora(data: CasoData, serial?: string) {
+    const s = serial ?? JSON.stringify(data);
+    const ahora = Date.now();
+    let id = casoActualId;
+    if (!id) {
+      id = nuevoId();
+      setCasoActualId(id);
+    }
+    localStorage.setItem(LS_ACTUAL, id);
+    setCasos((prev) => {
+      const entrada: CasoGuardado = { id, nombre: nombreDeCaso(data.datos), actualizado: ahora, data };
+      const lista = prev.some((c) => c.id === id) ? prev.map((c) => (c.id === id ? entrada : c)) : [...prev, entrada];
+      guardarCasos(lista);
+      return lista;
+    });
+    ultimoSerial.current = s;
+    setUltimoGuardado(ahora);
+    setEstadoGuardado("guardado");
+  }
+
+  // Botón "Guardar y continuar" (guarda ya, sin esperar al debounce).
+  function guardar() {
+    const data = datosActuales();
+    if (!hayContenido(data)) return;
+    guardarAhora(data);
+  }
+
+  // Empieza un caso nuevo en blanco (conserva la profesional recordada).
+  function nuevoCaso() {
+    setDatos((d) => ({ profesional: d.profesional }));
+    setTranscripcion("");
+    setDocTextos(DOC_TEXTOS_INICIAL);
+    setBorrador(null);
+    setDocs([]);
+    setMet(MET_INICIAL);
+    setRec(REC_INICIAL);
+    setCasoActualId("");
+    localStorage.removeItem(LS_ACTUAL);
+    ultimoSerial.current = "";
+    setEstadoGuardado("idle");
+    setUltimoGuardado(null);
+    setMostrarCasos(false);
+    setVerPreview(false);
+  }
+
+  // Carga un caso de la biblioteca.
+  function cargarCaso(id: string) {
+    const c = casos.find((x) => x.id === id);
+    if (!c) return;
+    aplicarCaso(c);
+    setCasoActualId(id);
+    localStorage.setItem(LS_ACTUAL, id);
+    setUltimoGuardado(c.actualizado);
+    setEstadoGuardado("guardado");
+    setMostrarCasos(false);
+    setVerPreview(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // Borra un caso de la biblioteca.
+  function borrarCaso(id: string) {
+    const c = casos.find((x) => x.id === id);
+    if (!confirm(`¿Borrar el caso "${c?.nombre || "sin título"}"? Esta acción no se puede deshacer.`)) return;
+    setCasos((prev) => {
+      const lista = prev.filter((x) => x.id !== id);
+      guardarCasos(lista);
+      return lista;
+    });
+    if (id === casoActualId) nuevoCaso();
+  }
+
+  const textoEstado =
+    estadoGuardado === "guardando"
+      ? "Guardando…"
+      : estadoGuardado === "sin"
+      ? "Cambios sin guardar…"
+      : estadoGuardado === "guardado"
+      ? `Guardado ✓${
+          ultimoGuardado
+            ? " · " + new Date(ultimoGuardado).toLocaleTimeString("es-PR", { hour: "2-digit", minute: "2-digit" })
+            : ""
+        }`
+      : "";
 
   async function salir() {
     await fetch("/api/salir", { method: "POST" });
     window.location.href = "/acceso";
+  }
+
+  // Une las tres categorías de documentos en un solo texto con encabezados,
+  // para que la IA sepa qué es legal, médico y económico.
+  function documentosCombinados(): string {
+    return CATEGORIAS_DOC.map((c) =>
+      docTextos[c.key].trim() ? `## ${c.titulo}\n\n${docTextos[c.key].trim()}` : ""
+    )
+      .filter(Boolean)
+      .join("\n\n");
+  }
+
+  // Lee la respuesta del servidor con tolerancia: si Vercel devuelve texto
+  // plano (p. ej. "Request Entity Too Large", 413) en vez de JSON, lo explica
+  // en español en lugar de reventar con "Unexpected token".
+  async function leerRespuesta(res: Response) {
+    const txt = await res.text();
+    try {
+      return JSON.parse(txt);
+    } catch {
+      if (res.status === 413 || /too large|request entity/i.test(txt)) {
+        throw new Error(
+          "El archivo o el contenido supera el límite de 4.5 MB del servidor. Sube menos documentos a la vez (o archivos más livianos) en cada categoría."
+        );
+      }
+      throw new Error(
+        `El servidor respondió de forma inesperada (HTTP ${res.status}). Intenta de nuevo o con archivos más pequeños.`
+      );
+    }
   }
 
   async function generar() {
@@ -196,9 +472,9 @@ export default function Home() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ datos, transcripcion, documentosTexto }),
+        body: JSON.stringify({ datos, transcripcion, documentosTexto: documentosCombinados() }),
       });
-      const data = await res.json();
+      const data = await leerRespuesta(res);
       if (!data.ok) throw new Error(data.error || "Error generando el borrador");
       setBorrador(data.borrador);
       setVerPreview(false);
@@ -210,16 +486,23 @@ export default function Home() {
     }
   }
 
-  async function subirAudio(file: File) {
+  // Sube uno o varios audios. Cada archivo se transcribe en su propia petición
+  // (respeta el límite de 25 MB y el tiempo máximo por archivo) y se va
+  // añadiendo a la transcripción con un encabezado que lo identifica.
+  async function subirAudios(files: FileList) {
     setSubiendoAudio(true);
     setError(null);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/transcribe", { method: "POST", body: fd });
-      const d = await res.json();
-      if (!d.ok) throw new Error(d.error || "Error transcribiendo el audio");
-      setTranscripcion(d.transcripcion);
+      const partes: string[] = transcripcion.trim() ? [transcripcion.trim()] : [];
+      for (const file of Array.from(files)) {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/transcribe", { method: "POST", body: fd });
+        const d = await leerRespuesta(res);
+        if (!d.ok) throw new Error(`${file.name}: ${d.error || "Error transcribiendo el audio"}`);
+        partes.push(`### Audio: ${file.name}\n${d.transcripcion}`);
+        setTranscripcion(partes.join("\n\n")); // muestra el progreso entre archivos
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error desconocido");
     } finally {
@@ -227,30 +510,36 @@ export default function Home() {
     }
   }
 
-  async function subirDocs(file: File) {
-    setSubiendoDocs(true);
+  // Sube un ZIP o archivo suelto (PDF, Word, imagen) a una de las tres
+  // categorías. El texto extraído reemplaza el de esa categoría y sus filas
+  // en la tabla de Documentos Revisados (deja intactas las otras categorías).
+  async function subirDocs(file: File, categoria: CatKey) {
+    setSubiendoCat(categoria);
     setError(null);
     try {
       const fd = new FormData();
       fd.append("file", file);
       const res = await fetch("/api/extract", { method: "POST", body: fd });
-      const d = await res.json();
+      const d = await leerRespuesta(res);
       if (!d.ok) throw new Error(d.error || "Error leyendo los documentos");
-      setDocumentosTexto(d.documentosTexto);
+      setDocTextos((prev) => ({ ...prev, [categoria]: d.documentosTexto }));
       if (Array.isArray(d.documentos) && d.documentos.length) {
-        setDocs(
-          d.documentos.map((x: { nombre: string; fecha: string }) => ({
-            nombre: x.nombre,
-            tipo: "",
-            fecha: x.fecha || "",
-            revisado: true,
-          }))
-        );
+        const nuevas: DocumentoRev[] = d.documentos.map((x: { nombre: string; fecha: string }) => ({
+          nombre: x.nombre,
+          tipo: "",
+          fecha: x.fecha || "",
+          revisado: true,
+          categoria,
+        }));
+        setDocs((prev) => {
+          const otras = prev.filter((row) => row.categoria !== categoria);
+          return [...otras, ...nuevas];
+        });
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error desconocido");
     } finally {
-      setSubiendoDocs(false);
+      setSubiendoCat(null);
     }
   }
 
@@ -302,15 +591,6 @@ export default function Home() {
     setTimeout(() => w.print(), 500);
   }
 
-  function guardar() {
-    localStorage.setItem(
-      "pericial_caso",
-      JSON.stringify({ datos, transcripcion, documentosTexto, borrador, docs, met, rec })
-    );
-    setGuardado(true);
-    setTimeout(() => setGuardado(false), 2000);
-  }
-
   const edad = calcularEdad(datos.fechaNacimiento || "", datos.fechaEvaluacion);
 
   return (
@@ -339,6 +619,82 @@ export default function Home() {
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-8 space-y-6">
+        {/* Barra de casos guardados (auto-guardado + biblioteca) */}
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#e7decc] bg-white px-4 py-3 shadow-sm">
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <button
+                onClick={() => setMostrarCasos((v) => !v)}
+                className="inline-flex items-center gap-1.5 rounded border border-laton/50 px-3 py-1.5 text-sm text-ink hover:bg-[#efe9dc]"
+              >
+                <svg aria-hidden="true" className="h-4 w-4 text-laton-dark" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+                </svg>
+                <span>Mis casos{casos.length ? ` (${casos.length})` : ""}</span>
+                <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
+              {mostrarCasos && (
+                <>
+                  <button
+                    aria-hidden="true"
+                    tabIndex={-1}
+                    onClick={() => setMostrarCasos(false)}
+                    className="fixed inset-0 z-10 cursor-default"
+                  />
+                  <div className="absolute left-0 z-20 mt-1 max-h-80 w-80 overflow-auto rounded border border-[#e7decc] bg-white shadow-md">
+                    {casos.length === 0 ? (
+                      <p className="px-3 py-3 text-sm text-slate-500">No hay casos guardados todavía.</p>
+                    ) : (
+                      [...casos]
+                        .sort((a, b) => b.actualizado - a.actualizado)
+                        .map((c) => (
+                          <div
+                            key={c.id}
+                            className={`flex items-center justify-between gap-2 px-3 py-2 hover:bg-[#fbf7ee] ${
+                              c.id === casoActualId ? "bg-[#fbf7ee]" : ""
+                            }`}
+                          >
+                            <button onClick={() => cargarCaso(c.id)} className="min-w-0 flex-1 text-left">
+                              <span className="block truncate text-sm font-medium text-ink">{c.nombre}</span>
+                              <span className="block text-[11px] text-slate-400">
+                                {new Date(c.actualizado).toLocaleString("es-PR")}
+                                {c.id === casoActualId ? " · actual" : ""}
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => borrarCaso(c.id)}
+                              title="Borrar caso"
+                              className="shrink-0 text-slate-400 hover:text-red-600"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+            <button
+              onClick={nuevoCaso}
+              className="rounded border border-laton/50 px-3 py-1.5 text-sm text-ink hover:bg-[#efe9dc]"
+            >
+              + Nuevo caso
+            </button>
+          </div>
+          <div className="flex items-center gap-3">
+            {textoEstado && <span className="text-xs text-slate-500">{textoEstado}</span>}
+            <button
+              onClick={guardar}
+              className="rounded bg-ink px-4 py-1.5 text-sm font-medium text-marfil hover:bg-ink-soft"
+            >
+              Guardar y continuar
+            </button>
+          </div>
+        </div>
+
         {/* 1. Datos del caso */}
         <section className="rounded-lg border border-[#e7decc] bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
@@ -376,9 +732,9 @@ export default function Home() {
               >
                 <option value="">Seleccionar…</option>
                 <optgroup label="Capacidad y tutela">
-                  <option value="Incapacidad">Incapacidad</option>
-                  <option value="Designación de tutor">Designación de tutor</option>
-                  <option value="Capacidad para tomar decisiones">Capacidad para tomar decisiones</option>
+                  <option value="Declaración de Incapacidad y Nombramiento de Tutor">
+                    Declaración de Incapacidad y Nombramiento de Tutor
+                  </option>
                 </optgroup>
                 <optgroup label="Inmigración">
                   <option value="Inmigración — Dificultad extrema (hardship/waiver)">Dificultad extrema (hardship / waiver)</option>
@@ -454,15 +810,18 @@ export default function Home() {
                 <input
                   type="file"
                   accept="audio/*,.mp3,.m4a,.wav"
+                  multiple
                   className="hidden"
-                  onChange={(e) => e.target.files?.[0] && subirAudio(e.target.files[0])}
+                  onChange={(e) => e.target.files?.length && subirAudios(e.target.files)}
                 />
                 <svg aria-hidden="true" className="h-4 w-4 text-laton-dark" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
                 </svg>
-                <span>{subiendoAudio ? "Transcribiendo…" : "Subir audio (MP3) de la entrevista"}</span>
+                <span>{subiendoAudio ? "Transcribiendo…" : "Subir audio(s) de la entrevista"}</span>
               </label>
-              <span className="text-xs text-slate-400">Whisper transcribe el audio automáticamente.</span>
+              <span className="text-xs text-slate-400">
+                Puedes subir varios audios; Whisper transcribe cada uno y los añade.
+              </span>
             </div>
             <AreaTexto
               label="Transcripción de la entrevista"
@@ -473,29 +832,37 @@ export default function Home() {
             />
           </div>
 
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-3">
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                <input
-                  type="file"
-                  accept=".zip"
-                  className="hidden"
-                  onChange={(e) => e.target.files?.[0] && subirDocs(e.target.files[0])}
+          {/* Documentos divididos en tres categorías */}
+          <div className="space-y-4">
+            <p className="text-xs font-medium text-slate-500">
+              Documentos del caso (sube cada categoría por separado — ZIP, PDF, Word o imagen):
+            </p>
+            {CATEGORIAS_DOC.map((c) => (
+              <div key={c.key} className="space-y-2 rounded-md border border-slate-200 bg-[#fbf7ee] p-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                    <input
+                      type="file"
+                      accept=".zip,.pdf,.doc,.docx,.txt,.md,.csv,image/*"
+                      className="hidden"
+                      onChange={(e) => e.target.files?.[0] && subirDocs(e.target.files[0], c.key)}
+                    />
+                    <svg aria-hidden="true" className="h-4 w-4 text-laton-dark" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
+                    </svg>
+                    <span>{subiendoCat === c.key ? "Leyendo…" : `Subir — ${c.label}`}</span>
+                  </label>
+                  <span className="text-xs text-slate-400">{c.hint}</span>
+                </div>
+                <AreaTexto
+                  label={c.label}
+                  hint="(Sube el archivo arriba, o pega el texto.)"
+                  value={docTextos[c.key]}
+                  onChange={(v) => setDocTextos((prev) => ({ ...prev, [c.key]: v }))}
+                  rows={4}
                 />
-                <svg aria-hidden="true" className="h-4 w-4 text-laton-dark" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
-                </svg>
-                <span>{subiendoDocs ? "Leyendo documentos…" : "Subir documentos (ZIP)"}</span>
-              </label>
-              <span className="text-xs text-slate-400">Lee PDF, Word, imágenes y escaneados automáticamente.</span>
-            </div>
-            <AreaTexto
-              label="Contenido de documentos revisados"
-              hint="(Sube el ZIP arriba, o pega el texto.)"
-              value={documentosTexto}
-              onChange={setDocumentosTexto}
-              rows={5}
-            />
+              </div>
+            ))}
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -553,11 +920,12 @@ export default function Home() {
 
             {/* Barra de acciones al final */}
             <div className="flex flex-wrap items-center justify-end gap-2 border-t border-[#e7decc] pt-4">
+              {textoEstado && <span className="mr-auto text-xs text-slate-500">{textoEstado}</span>}
               <button
                 onClick={guardar}
                 className="rounded border border-laton/50 px-3 py-1.5 text-sm text-ink hover:bg-[#efe9dc]"
               >
-                {guardado ? "Guardado ✓" : "Guardar"}
+                Guardar y continuar
               </button>
               <button
                 onClick={() => setVerPreview((v) => !v)}
@@ -836,7 +1204,7 @@ function MetodologiaForm({ met, onChange }: { met: Metodologia; onChange: (m: Me
 function DocumentosForm({ docs, onChange }: { docs: DocumentoRev[]; onChange: (d: DocumentoRev[]) => void }) {
   const upd = (i: number, campo: keyof DocumentoRev, v: string | boolean) =>
     onChange(docs.map((d, idx) => (idx === i ? { ...d, [campo]: v } : d)));
-  const add = () => onChange([...docs, { nombre: "", tipo: "", fecha: "", revisado: true }]);
+  const add = () => onChange([...docs, { nombre: "", tipo: "", fecha: "", revisado: true, categoria: "" }]);
   const del = (i: number) => onChange(docs.filter((_, idx) => idx !== i));
 
   return (
@@ -844,7 +1212,7 @@ function DocumentosForm({ docs, onChange }: { docs: DocumentoRev[]; onChange: (d
       <div>
         <h3 className="font-serif text-base text-ink">2. Documentos Revisados</h3>
         <p className="text-xs text-slate-500">
-          Se llenan solos al subir el ZIP. Ajusta el tipo y marca cuáles revisaste.
+          Se llenan solos al subir documentos en cada categoría. Ajusta la categoría/tipo y marca cuáles revisaste.
         </p>
       </div>
       <div className="overflow-x-auto">
@@ -852,6 +1220,7 @@ function DocumentosForm({ docs, onChange }: { docs: DocumentoRev[]; onChange: (d
           <thead>
             <tr className="bg-slate-100 text-left text-slate-600">
               <th className="border border-slate-200 px-2 py-1 font-medium">Nombre del documento</th>
+              <th className="border border-slate-200 px-2 py-1 font-medium">Categoría</th>
               <th className="border border-slate-200 px-2 py-1 font-medium">Tipo</th>
               <th className="border border-slate-200 px-2 py-1 font-medium">Fecha</th>
               <th className="border border-slate-200 px-2 py-1 text-center font-medium">Revisado</th>
@@ -864,7 +1233,17 @@ function DocumentosForm({ docs, onChange }: { docs: DocumentoRev[]; onChange: (d
                 <td className="border border-slate-200 px-2 py-1 align-top">
                   <input value={d.nombre} onChange={(e) => upd(i, "nombre", e.target.value)} className={INPUT_CLS} />
                 </td>
-                <td className="w-[24%] border border-slate-200 px-2 py-1 align-top">
+                <td className="w-[18%] border border-slate-200 px-2 py-1 align-top">
+                  <select value={d.categoria || ""} onChange={(e) => upd(i, "categoria", e.target.value)} className={INPUT_CLS}>
+                    <option value="">Seleccionar…</option>
+                    {CATEGORIA_OPCIONES.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                <td className="w-[20%] border border-slate-200 px-2 py-1 align-top">
                   <select value={d.tipo} onChange={(e) => upd(i, "tipo", e.target.value)} className={INPUT_CLS}>
                     <option value="">Seleccionar…</option>
                     {TIPOS_DOC.map((o) => (

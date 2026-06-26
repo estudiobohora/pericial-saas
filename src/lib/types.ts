@@ -40,11 +40,13 @@ export type Metodologia = {
 };
 
 // Sección 2: Documentos Revisados — la completa/ajusta la profesional.
+// `categoria` agrupa el documento en legales / medicos / economicos.
 export type DocumentoRev = {
   nombre: string;
   tipo: string;
   fecha: string;
   revisado: boolean;
+  categoria?: string;
 };
 
 // Sección 6.2: Recomendaciones al Tribunal — checklist + texto libre.
