@@ -152,12 +152,15 @@ const MET_INICIAL: Metodologia = {
 // ── Guardado local de casos: biblioteca de varios casos en localStorage ──
 // (Camino A: sin login. Cada caso se guarda con nombre y fecha; el activo se
 // auto-restaura al volver. El paso a la nube/Supabase queda para vender.)
-// Nota: el TEXTO extraído de los documentos (docTextos) NO se persiste — solo
-// vive en memoria para usarse al generar. Se guarda únicamente la lista de
-// documentos (docs: nombres/categoría/fecha), no su contenido (confidencialidad).
+// "Guardar oculto": el texto extraído de los documentos (docTextos) SÍ se guarda
+// con el caso para poder regenerar tras recargar — pero NUNCA se muestra en
+// pantalla (no hay cajas de contenido; solo chips con el nombre). Vive solo en
+// el navegador de la profesional. La confidencialidad fuerte (cifrado/BAA) llega
+// con el paso a la nube/Supabase.
 type CasoData = {
   datos: DatosCaso;
   transcripcion: string;
+  docTextos: DocTextos;
   borrador: Borrador | null;
   docs: DocumentoRev[];
   met: Metodologia;
@@ -233,9 +236,16 @@ export default function Home() {
     if (legacy && !lista.length) {
       try {
         const s = JSON.parse(legacy);
+        const docTx: DocTextos =
+          s.docTextos && typeof s.docTextos === "object"
+            ? { ...DOC_TEXTOS_INICIAL, ...s.docTextos }
+            : typeof s.documentosTexto === "string"
+            ? { ...DOC_TEXTOS_INICIAL, legales: s.documentosTexto }
+            : DOC_TEXTOS_INICIAL;
         const data: CasoData = {
           datos: s.datos || {},
           transcripcion: typeof s.transcripcion === "string" ? s.transcripcion : "",
+          docTextos: docTx,
           borrador: s.borrador || null,
           docs: Array.isArray(s.docs) ? s.docs : [],
           met: s.met || MET_INICIAL,
@@ -271,7 +281,7 @@ export default function Home() {
     const t = setTimeout(() => guardarAhora(data, serial), 800);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [datos, transcripcion, borrador, docs, met, rec]);
+  }, [datos, transcripcion, docTextos, borrador, docs, met, rec]);
 
   const previewHtml = useMemo(() => {
     if (!borrador) return "";
@@ -303,9 +313,9 @@ export default function Home() {
 
   // ── Biblioteca de casos (guardado local) ──
 
-  // Estado actual del caso en pantalla, listo para guardar (sin docTextos).
+  // Estado actual del caso en pantalla, listo para guardar (incluye docTextos oculto).
   function datosActuales(): CasoData {
-    return { datos, transcripcion, borrador, docs, met, rec };
+    return { datos, transcripcion, docTextos, borrador, docs, met, rec };
   }
 
   // ¿Vale la pena guardar? (Ignora la profesional recordada: un caso vacío
@@ -319,17 +329,18 @@ export default function Home() {
   }
 
   // Carga un caso guardado a la pantalla (y fija su huella para no re-guardarlo).
-  // El texto de los documentos no se guarda → se limpia (hay que re-subir para regenerar).
+  // El contenido de los documentos se restaura (oculto) para poder regenerar.
   function aplicarCaso(c: CasoGuardado) {
     const datosN = c.data.datos || {};
     const transcN = c.data.transcripcion || "";
+    const docTxN = { ...DOC_TEXTOS_INICIAL, ...(c.data.docTextos || {}) };
     const borrN = c.data.borrador || null;
     const docsN = Array.isArray(c.data.docs) ? c.data.docs : [];
     const metN = c.data.met || MET_INICIAL;
     const recN = c.data.rec || REC_INICIAL;
     setDatos(datosN);
     setTranscripcion(transcN);
-    setDocTextos(DOC_TEXTOS_INICIAL);
+    setDocTextos(docTxN);
     setBorrador(borrN);
     setDocs(docsN);
     setMet(metN);
@@ -337,6 +348,7 @@ export default function Home() {
     ultimoSerial.current = JSON.stringify({
       datos: datosN,
       transcripcion: transcN,
+      docTextos: docTxN,
       borrador: borrN,
       docs: docsN,
       met: metN,
@@ -372,8 +384,8 @@ export default function Home() {
     guardarAhora(data);
   }
 
-  // Empieza un caso nuevo en blanco (conserva la profesional recordada).
-  function nuevoCaso() {
+  // Limpia el formulario en pantalla (sin tocar la biblioteca). Conserva la profesional.
+  function limpiarFormulario() {
     setDatos((d) => ({ profesional: d.profesional }));
     setTranscripcion("");
     setDocTextos(DOC_TEXTOS_INICIAL);
@@ -388,6 +400,34 @@ export default function Home() {
     setUltimoGuardado(null);
     setMostrarCasos(false);
     setVerPreview(false);
+    setError(null);
+  }
+
+  // Empieza un caso nuevo en blanco (conserva la profesional recordada).
+  function nuevoCaso() {
+    limpiarFormulario();
+  }
+
+  // Borra/limpia el caso actual: si está guardado lo elimina de la biblioteca, y
+  // vacía el formulario. Para casos cancelados, errores, o empezar de cero.
+  function borrarCasoActual() {
+    const hayAlgo = casoActualId || hayContenido(datosActuales());
+    if (!hayAlgo) return;
+    if (
+      !confirm(
+        "¿Borrar este caso y limpiar el formulario? Se elimina de \"Mis casos\" y no se puede deshacer."
+      )
+    )
+      return;
+    if (casoActualId) {
+      const idActual = casoActualId;
+      setCasos((prev) => {
+        const lista = prev.filter((x) => x.id !== idActual);
+        guardarCasos(lista);
+        return lista;
+      });
+    }
+    limpiarFormulario();
   }
 
   // Carga un caso de la biblioteca.
@@ -708,6 +748,15 @@ export default function Home() {
             >
               + Nuevo caso
             </button>
+            <button
+              onClick={borrarCasoActual}
+              className="inline-flex items-center gap-1.5 rounded border border-red-200 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50"
+            >
+              <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+              </svg>
+              Borrar caso
+            </button>
           </div>
           <div className="flex items-center gap-3">
             {textoEstado && <span className="text-xs text-slate-500">{textoEstado}</span>}
@@ -862,7 +911,7 @@ export default function Home() {
             <p className="text-xs font-medium text-slate-500">
               Documentos del caso (sube cada categoría por separado — ZIP, PDF, Word o imagen).{" "}
               <span className="font-normal text-slate-400">
-                Por confidencialidad, el contenido no se muestra ni se guarda: la IA lo lee solo al generar el borrador.
+                Por confidencialidad, el contenido no se muestra (solo el nombre del archivo); se guarda en tu navegador para que puedas regenerar, y la IA lo lee al generar el borrador.
               </span>
             </p>
             {CATEGORIAS_DOC.map((c) => {
