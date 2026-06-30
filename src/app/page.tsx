@@ -883,7 +883,13 @@ export default function Home() {
           <h2 className="font-serif text-lg text-ink">
             Entrevista y documentos
           </h2>
-          <div className="space-y-2">
+          <div className="space-y-3">
+            <p className="text-xs text-slate-500">
+              Dos formas de aportar la entrevista — use la que prefiera:{" "}
+              <span className="font-medium text-slate-600">subir el audio</span> (se transcribe solo){" "}
+              <span className="text-slate-400">o</span>{" "}
+              <span className="font-medium text-slate-600">escribir/pegar la transcripción</span> directamente, sin subir audio.
+            </p>
             <div className="flex flex-wrap items-center gap-3">
               <label className="inline-flex cursor-pointer items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
                 <input
@@ -898,13 +904,11 @@ export default function Home() {
                 </svg>
                 <span>{subiendoAudio ? "Transcribiendo…" : "Subir audio(s) de la entrevista"}</span>
               </label>
-              <span className="text-xs text-slate-400">
-                Puedes subir varios audios; Whisper transcribe cada uno y los añade.
-              </span>
+              <span className="text-xs text-slate-400">Opcional. Whisper transcribe cada audio y lo añade abajo.</span>
             </div>
             <AreaTexto
               label="Transcripción de la entrevista"
-              hint="(Se llena al subir el audio. Revísala y corrige lo necesario.)"
+              hint="(Súbala como audio arriba, o escríbala/péguela aquí directamente — sin audio.)"
               value={transcripcion}
               onChange={setTranscripcion}
               rows={8}
