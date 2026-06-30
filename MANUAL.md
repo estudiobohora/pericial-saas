@@ -61,7 +61,7 @@ El valor: pasar de ~2 días de redacción a unas pocas horas de revisión y ajus
 | **Dirección** | https://pericial-saas.vercel.app |
 | **Acceso de la beta** | mediante contraseña provista por el administrador |
 
-Abra el enlace en un navegador, ingrese la contraseña y comience a trabajar el caso. El botón **Salir** (arriba a la derecha) cierra la sesión.
+Al abrir el enlace verá la **pantalla de acceso**: a la izquierda, la presentación de la herramienta (su propuesta de valor y las garantías de confidencialidad, autoría profesional y rigor sin invención de datos); a la derecha, el campo para ingresar su **contraseña** (con opción de mostrar/ocultar). Escríbala y pulse **Entrar**. Ya dentro de la herramienta, el botón **Salir** (arriba a la derecha) cierra la sesión.
 
 ---
 
