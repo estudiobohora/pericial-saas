@@ -19,7 +19,7 @@ const CASO_DEMO = {
     personaEvaluada: "Carmen Rivera Soto",
     fechaNacimiento: "1944-03-10",
     fechaEvaluacion: "2026-07-15",
-    profesional: "Yeida [Apellido], TSF, Lic. #XXXX",
+    profesional: "", // en blanco: la profesional pone su nombre; el demo no debe sembrarlo
     tipoEvaluacion: "Declaración de Incapacidad y Nombramiento de Tutor",
   },
   transcripcion: `[Trabajadora Social]: Buenas tardes, ¿cómo se siente hoy doña Carmen?
@@ -220,6 +220,11 @@ export default function Home() {
   // Recuerda los datos de la profesional entre informes (se llena solo).
   useEffect(() => {
     const saved = localStorage.getItem("pericial_profesional");
+    // Limpia el nombre que el caso de prueba sembró antes (default debe quedar en blanco).
+    if (saved === "Yeida [Apellido], TSF, Lic. #XXXX") {
+      localStorage.removeItem("pericial_profesional");
+      return;
+    }
     if (saved) setDatos((d) => ({ ...d, profesional: d.profesional || saved }));
   }, []);
   useEffect(() => {
