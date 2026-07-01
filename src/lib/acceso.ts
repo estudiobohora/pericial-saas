@@ -2,10 +2,29 @@
 // (lo importa el middleware, que corre en el edge). No importar aquí nada de Node/Supabase.
 //
 // Modelo:
-//  - CODIGOS_TRIAL: lista separada por comas de códigos con prueba limitada (N informes).
-//  - CODIGOS_PRO:   lista separada por comas de códigos ilimitados (Ángel, Yeida, clientes que pagaron).
-//  - BETA_PASSWORD: la contraseña original — se trata como PRO (ilimitado), por compatibilidad.
-//  - TRIAL_LIMITE:  número de informes de la prueba (default 2).
+//  - PRO: códigos ILIMITADOS (Ángel/admin, clientes que pagaron). Default: Admin25.
+//  - TRIAL: códigos con prueba limitada a TRIAL_LIMITE informes CADA UNO (uno por persona).
+//  - Las env vars CODIGOS_PRO / CODIGOS_TRIAL / TRIAL_LIMITE sobreescriben los defaults.
+//  - El conteo es POR CÓDIGO (ver lib/uso.ts) → un código = una persona.
+
+// Código ilimitado del administrador (Ángel).
+const DEFAULT_PRO = ["Admin25"];
+
+// Tanda de códigos de prueba (uno por evaluador). 2 informes cada uno.
+const DEFAULT_TRIAL = [
+  "PRUEBA-QX41",
+  "PRUEBA-KM73",
+  "PRUEBA-ZP58",
+  "PRUEBA-RT92",
+  "PRUEBA-BV36",
+  "PRUEBA-JD17",
+  "PRUEBA-WL64",
+  "PRUEBA-NC29",
+  "PRUEBA-HF85",
+  "PRUEBA-YT43",
+  "PRUEBA-GM06",
+  "PRUEBA-XP71",
+];
 
 function parse(v?: string): string[] {
   return (v || "")
@@ -15,17 +34,16 @@ function parse(v?: string): string[] {
 }
 
 export function codigosTrial(): string[] {
-  return parse(process.env.CODIGOS_TRIAL);
+  const env = parse(process.env.CODIGOS_TRIAL);
+  return env.length ? env : DEFAULT_TRIAL;
 }
 
 export function codigosPro(): string[] {
-  const pro = parse(process.env.CODIGOS_PRO);
-  const bp = process.env.BETA_PASSWORD?.trim();
-  if (bp) pro.push(bp);
-  return pro;
+  const env = parse(process.env.CODIGOS_PRO);
+  return env.length ? env : DEFAULT_PRO;
 }
 
-// ¿Hay algún código/gate configurado? Si no, la app queda abierta (útil en local).
+// Siempre hay gate (hay defaults). Se mantiene por claridad/futuro.
 export function gateActivo(): boolean {
   return codigosTrial().length > 0 || codigosPro().length > 0;
 }
