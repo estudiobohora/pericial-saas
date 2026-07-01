@@ -59,9 +59,11 @@ El valor: pasar de ~2 días de redacción a unas pocas horas de revisión y ajus
 | | |
 |---|---|
 | **Dirección** | https://pericial-saas.vercel.app |
-| **Acceso de la beta** | mediante contraseña provista por el administrador |
+| **Acceso** | mediante un **código de acceso** individual provisto por el administrador |
 
-Al abrir el enlace verá la **pantalla de acceso**: a la izquierda, la presentación de la herramienta (su propuesta de valor y las garantías de confidencialidad, autoría profesional y rigor sin invención de datos); a la derecha, el campo para ingresar su **contraseña** (con opción de mostrar/ocultar). Escríbala y pulse **Entrar**. Ya dentro de la herramienta, el botón **Salir** (arriba a la derecha) cierra la sesión.
+Al abrir el enlace verá la **pantalla de acceso**: a la izquierda, la presentación de la herramienta (su propuesta de valor y las garantías de confidencialidad, autoría profesional y rigor sin invención de datos); a la derecha, el campo para ingresar su **código de acceso** (con opción de mostrar/ocultar). Escríbalo y pulse **Entrar**. Ya dentro de la herramienta, el botón **Salir** (arriba a la derecha) cierra la sesión.
+
+**Prueba y licencia.** El código de prueba incluye **2 informes de cortesía**. Al agotarlos, la herramienta le muestra cómo **adquirir la licencia** para uso continuo (planes desde $49/mes, con opciones para firmas con varios profesionales).
 
 ---
 
@@ -79,10 +81,11 @@ Complete los campos de identificación:
 - **Ubicación:** situación de vivienda de la persona evaluada (residencia propia, residencia de familia o pariente, hogar de cuidado prolongado, otro).
 - **Peticionario/a y Relación con la persona evaluada.**
 
-### 4.2 Entrevista (audio → transcripción)
-- Pulse **"Subir audio(s) de la entrevista"**. Puede subir **uno o varios** archivos; cada uno se transcribe por separado y se va añadiendo, identificado por su nombre.
-- La transcripción aparece en el recuadro editable. **Revísela y corríjala** (la transcripción automática puede tener errores de nombres, cifras o términos).
-- También puede pegar texto directamente si ya tiene la transcripción.
+### 4.2 Entrevista (dos formas — como prefiera)
+Tiene **dos maneras** de aportar la entrevista, use la que le convenga:
+- **Subir audio (opcional):** pulse **"Subir audio(s) de la entrevista"**. Puede subir **uno o varios** archivos; cada uno se transcribe por separado y se va añadiendo, identificado por su nombre.
+- **Escribir/pegar la transcripción:** si prefiere **no subir audio**, escriba o pegue directamente la transcripción en el recuadro. La herramienta funciona igual.
+- Si usó audio, **revise y corrija** la transcripción (la transcripción automática puede tener errores de nombres, cifras o términos).
 
 ### 4.3 Documentos del caso (por categoría)
 Suba los documentos **del caso** organizados en tres categorías:
