@@ -7,8 +7,8 @@
 //  - Las env vars CODIGOS_PRO / CODIGOS_TRIAL / TRIAL_LIMITE sobreescriben los defaults.
 //  - El conteo es POR CÓDIGO (ver lib/uso.ts) → un código = una persona.
 
-// Código ilimitado del administrador (Ángel).
-const DEFAULT_PRO = ["Admin25"];
+// Códigos ilimitados (PRO): admin (Ángel) + early champions / clientes que pagaron.
+const DEFAULT_PRO = ["Admin25", "YEIDA-PRO-9F3K"];
 
 // Tanda de códigos de prueba (uno por evaluador). 2 informes cada uno.
 const DEFAULT_TRIAL = [
