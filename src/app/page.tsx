@@ -201,6 +201,7 @@ export default function Home() {
   const [borrador, setBorrador] = useState<Borrador | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [limiteInfo, setLimiteInfo] = useState<string | null>(null);
   const [verPreview, setVerPreview] = useState(false);
   const [subiendoAudio, setSubiendoAudio] = useState(false);
   const [subiendoCat, setSubiendoCat] = useState<CatKey | null>(null);
@@ -532,6 +533,7 @@ export default function Home() {
 
     setLoading(true);
     setError(null);
+    setLimiteInfo(null);
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
@@ -539,6 +541,10 @@ export default function Home() {
         body: JSON.stringify({ datos, transcripcion, documentosTexto: documentosCombinados() }),
       });
       const data = await leerRespuesta(res);
+      if (data.limitReached) {
+        setLimiteInfo(data.error || "Prueba completada.");
+        return;
+      }
       if (!data.ok) throw new Error(data.error || "Error generando el borrador");
       setBorrador(data.borrador);
       setVerPreview(false);
@@ -991,6 +997,24 @@ export default function Home() {
           </div>
           {error && (
             <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</div>
+          )}
+          {limiteInfo && (
+            <div className="rounded-lg border border-laton/50 bg-[#fbf7ee] px-5 py-5">
+              <h3 className="font-serif text-lg text-ink">Prueba completada</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+                {limiteInfo} Para seguir usando la herramienta y generar informes sin límite,
+                adquiera la licencia.
+              </p>
+              <a
+                href="mailto:hola@estudiobohora.com?subject=Licencia%20Pericial&body=Hola%2C%20quiero%20adquirir%20la%20licencia%20de%20Pericial."
+                className="mt-4 inline-block rounded-md bg-[#b45309] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#97470a]"
+              >
+                Adquirir licencia
+              </a>
+              <p className="mt-3 text-[12px] text-slate-400">
+                ¿Preguntas? Escriba a hola@estudiobohora.com
+              </p>
+            </div>
           )}
         </section>
 

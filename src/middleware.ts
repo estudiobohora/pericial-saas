@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { esValido, gateActivo } from "@/lib/acceso";
 
-// Protege toda la app con una contraseña simple para la beta privada.
-// Se activa SOLO si existe la variable BETA_PASSWORD (en local queda abierto).
+// Protege toda la app con códigos de acceso (beta privada).
+// Se activa si hay códigos configurados (CODIGOS_TRIAL/CODIGOS_PRO/BETA_PASSWORD).
+// En local, sin códigos, queda abierto.
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -15,11 +17,10 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const expected = process.env.BETA_PASSWORD;
-  if (!expected) return NextResponse.next(); // sin contraseña configurada → no bloquea
+  if (!gateActivo()) return NextResponse.next(); // sin códigos configurados → no bloquea
 
-  const cookie = req.cookies.get("beta_ok")?.value;
-  if (cookie === expected) return NextResponse.next();
+  const cookie = req.cookies.get("beta_ok")?.value || "";
+  if (esValido(cookie)) return NextResponse.next();
 
   // No autorizado: API → 401; páginas → redirige a /acceso.
   if (pathname.startsWith("/api/")) {

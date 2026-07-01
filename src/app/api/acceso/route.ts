@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { esValido } from "@/lib/acceso";
 
 export const runtime = "nodejs";
 
-// Verifica la contraseña de la beta y, si es correcta, deja una cookie httpOnly.
+// Verifica el código de acceso de la beta y, si es válido, deja una cookie httpOnly.
 export async function POST(req: NextRequest) {
-  const { password } = await req.json().catch(() => ({ password: "" }));
-  const expected = process.env.BETA_PASSWORD;
+  const body = await req.json().catch(() => ({ password: "" }));
+  const codigo = typeof body?.password === "string" ? body.password.trim() : "";
 
-  if (!expected || password !== expected) {
+  if (!esValido(codigo)) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 
   const res = NextResponse.json({ ok: true });
-  res.cookies.set("beta_ok", password, {
+  res.cookies.set("beta_ok", codigo, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

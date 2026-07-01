@@ -114,7 +114,7 @@ export default function Acceso() {
           <form onSubmit={entrar} className="mt-8 space-y-4">
             <div>
               <label htmlFor="password" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600">
-                Contraseña
+                Código de acceso
               </label>
               <div className="relative">
                 <input
@@ -125,7 +125,7 @@ export default function Acceso() {
                   autoFocus
                   autoComplete="current-password"
                   aria-invalid={error}
-                  placeholder="Ingrese su contraseña"
+                  placeholder="Ingrese su código de acceso"
                   className="w-full rounded-md border border-laton/40 bg-white px-4 py-3 pr-11 text-[15px] text-ink placeholder:text-slate-300 transition-colors focus:border-laton focus:outline-none focus:ring-2 focus:ring-laton/30"
                 />
                 <button
@@ -150,7 +150,7 @@ export default function Acceso() {
 
             {error && (
               <p role="alert" aria-live="polite" className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                Contraseña incorrecta. Verifíquela e intente de nuevo.
+                Código incorrecto. Verifíquelo e intente de nuevo.
               </p>
             )}
 
