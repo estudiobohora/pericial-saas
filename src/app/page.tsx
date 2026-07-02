@@ -1111,10 +1111,10 @@ export default function Home() {
 
       <footer className="mx-auto max-w-5xl px-6 py-8 text-center text-[#9c8f76]">
         <p className="font-serif text-xs tracking-wide">
-          © 2026 Angel Comas, Psicólogo I/O. Todos los derechos reservados.
+          © 2026 ToolTank. Todos los derechos reservados. Hecho en Puerto Rico.
         </p>
         <p className="mx-auto mt-1.5 max-w-2xl text-[11px] leading-relaxed">
-          Herramienta Digital Asistida con IA para Profesionales de la Salud Mental en el Área Forense. Hecho en Puerto Rico.
+          Herramienta Digital Asistida con IA para Profesionales de la Salud Mental en el Área Forense.
         </p>
       </footer>
     </div>

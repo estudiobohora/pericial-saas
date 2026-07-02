@@ -93,7 +93,7 @@ export default function Acceso() {
 
         {/* Pie */}
         <p className="relative text-[11px] leading-relaxed text-marfil/40">
-          © 2026 Ángel Comas, Psicólogo I/O. Todos los derechos reservados.
+          © 2026 ToolTank. Todos los derechos reservados.
           <span className="block">Hecho en Puerto Rico.</span>
         </p>
       </section>
