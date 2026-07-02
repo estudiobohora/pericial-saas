@@ -719,7 +719,7 @@ export default function Home() {
                     onClick={() => setMostrarCasos(false)}
                     className="fixed inset-0 z-10 cursor-default"
                   />
-                  <div className="absolute left-0 z-20 mt-1 max-h-80 w-80 overflow-auto rounded border border-[#e7decc] bg-white shadow-md">
+                  <div className="absolute left-0 z-20 mt-1 max-h-80 w-[85vw] max-w-xs overflow-auto rounded border border-[#e7decc] bg-white shadow-md">
                     {casos.length === 0 ? (
                       <p className="px-3 py-3 text-sm text-slate-500">No hay casos guardados todavía.</p>
                     ) : (
@@ -1218,7 +1218,7 @@ function MetodologiaForm({ met, onChange }: { met: Metodologia; onChange: (m: Me
       <div className="space-y-2">
         <div className="text-xs font-semibold text-slate-600">Técnicas e instrumentos utilizados</div>
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-[13px]">
+          <table className="w-full min-w-[640px] border-collapse text-[13px]">
             <thead>
               <tr className="bg-slate-100 text-left text-slate-600">
                 <th className="border border-slate-200 px-2 py-1 font-medium">Técnica / Herramienta</th>
@@ -1275,7 +1275,7 @@ function MetodologiaForm({ met, onChange }: { met: Metodologia; onChange: (m: Me
       <div className="space-y-2">
         <div className="text-xs font-semibold text-slate-600">Entrevistas realizadas</div>
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-[13px]">
+          <table className="w-full min-w-[640px] border-collapse text-[13px]">
             <thead>
               <tr className="bg-slate-100 text-left text-slate-600">
                 <th className="border border-slate-200 px-2 py-1 font-medium">Entrevistada/o</th>
@@ -1355,7 +1355,7 @@ function DocumentosForm({ docs, onChange }: { docs: DocumentoRev[]; onChange: (d
         </p>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-[13px]">
+        <table className="w-full min-w-[640px] border-collapse text-[13px]">
           <thead>
             <tr className="bg-slate-100 text-left text-slate-600">
               <th className="border border-slate-200 px-2 py-1 font-medium">Nombre del documento</th>

@@ -33,7 +33,7 @@ export default function Acceso() {
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[1.05fr_0.95fr]">
       {/* ── Panel de marca (tinta) ── */}
-      <section className="relative flex flex-col justify-between overflow-hidden bg-ink px-8 py-10 text-marfil lg:min-h-dvh lg:px-14 lg:py-12">
+      <section className="relative flex flex-col justify-between overflow-hidden bg-ink px-8 py-10 text-marfil sm:px-12 lg:min-h-dvh lg:px-20 lg:py-14 xl:px-28 2xl:px-36">
         {/* Acento superior latón */}
         <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-laton-dark via-laton to-laton-soft" />
         {/* Glifo decorativo sutil */}
